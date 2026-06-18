@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ORAVIE | Commande confirmée</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #F9F8F6 0%, #F2F4EF 100%);
+      font-family: 'Inter', sans-serif;
+      color: #2C3A2F;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.5); opacity: 0; }
+      70%  { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+      margin-bottom: 2.5rem;
+      animation: fadeInUp 0.5s ease-out;
+    }
+
+    .logo-icon {
+      background: #DCE9D4;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #4A735C;
+    }
+
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #2F4B3C;
+    }
+
+    .card {
+      background: white;
+      border-radius: 2rem;
+      padding: 3rem 2.5rem;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+      animation: fadeInUp 0.6s ease-out 0.1s both;
+    }
+
+    .check-circle {
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(135deg, #4A735C, #2F4B3C);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.8rem;
+      animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s both;
+    }
+
+    .check-circle i {
+      font-size: 2.2rem;
+      color: white;
+    }
+
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #2F4B3C;
+      margin-bottom: 0.6rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: #7D8F76;
+      margin-bottom: 1.8rem;
+      line-height: 1.6;
+    }
+
+    .order-info {
+      background: #F4F7F1;
+      border-radius: 1.2rem;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .order-info .label {
+      font-size: 0.85rem;
+      color: #7D8F76;
+    }
+
+    .order-info .value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #2F4B3C;
+    }
+
+    .divider {
+      width: 1px;
+      height: 36px;
+      background: #DCE9D4;
+    }
+
+    .message {
+      font-size: 0.9rem;
+      color: #92A389;
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #4A735C, #2F4B3C);
+      color: white;
+      text-decoration: none;
+      padding: 0.85rem 2rem;
+      border-radius: 2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .btn-home:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="logo">
+    <div class="logo-icon"><i class="fas fa-leaf"></i></div>
+    <span class="logo-text">ORAVIE</span>
+  </a>
+
+  <div class="card">
+    <div class="check-circle">
+      <i class="fas fa-check"></i>
+    </div>
+
+    <h1 class="title">Félicitations !</h1>
+    <p class="subtitle">Votre commande a bien été prise en charge.<br>Nous vous contacterons très prochainement.</p>
+
+    <div class="order-info">
+      <div>
+        <div class="label">Numéro de commande</div>
+        <div class="value" id="orderId">—</div>
+        <div style="font-size:0.75rem;color:#92A389;margin-top:3px;" id="orderDate"></div>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <div class="label">Total</div>
+        <div class="value" id="orderTotal">—</div>
+      </div>
+    </div>
+
+    <p class="message">
+      Merci de votre confiance et à très bientôt !
+    </p>
+
+    <a href="index.html" class="btn-home">
+      <i class="fas fa-home"></i> Retour à l'accueil
+    </a>
+  </div>
+
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var id    = params.get('id');
+    var total = params.get('total');
+
+    if (id) {
+      document.getElementById('orderId').textContent = '#' + id;
+    }
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+    document.getElementById('orderDate').textContent = dateStr;
+    if (total) {
+      document.getElementById('orderTotal').textContent = parseFloat(total).toFixed(2) + ' DT';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# Interdire l'accès direct au fichier envprod
+<Files "envprod">
+    Order allow,deny
+    Deny from all
+</Files>

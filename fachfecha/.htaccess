@@ -1,0 +1,5 @@
+# Interdire l'accès direct à auth.php
+<Files "auth.php">
+    Order allow,deny
+    Deny from all
+</Files>

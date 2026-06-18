@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ORAVIE | Finaliser ma commande</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #F9F8F6 0%, #F2F4EF 100%);
+      font-family: 'Inter', sans-serif;
+      color: #2C3A2F;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #E9EDE4;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .logo-icon {
+      background: #DCE9D4;
+      width: 45px;
+      height: 45px;
+      border-radius: 60%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #4A735C;
+    }
+
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #2F4B3C;
+    }
+
+    /* Layout 2 colonnes */
+    .checkout-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .form-section {
+      flex: 1.2;
+      min-width: 280px;
+      background: white;
+      border-radius: 1.8rem;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .summary-section {
+      flex: 0.8;
+      min-width: 280px;
+      background: #FEFEF9;
+      border-radius: 1.8rem;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      height: fit-content;
+      position: sticky;
+      top: 2rem;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2F4B3C;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7D8F76;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input:not(.qty-val), select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 1rem;
+      border: 1.5px solid #E2E9DA;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+
+    input:not(.qty-val):focus, select:focus {
+      outline: none;
+      border-color: #C6A43F;
+      box-shadow: 0 0 0 3px rgba(198,164,63,0.1);
+    }
+
+    .row-2 {
+      display: flex;
+      gap: 1rem;
+    }
+    .row-2 > div { flex: 1; }
+
+    /* Résumé commande */
+    .product-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #ECF0E5;
+    }
+
+    .product-thumb {
+      width: 60px;
+      height: 60px;
+      background: #EFF3EA;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .product-details {
+      flex: 1;
+    }
+
+    .product-title {
+      font-weight: 700;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.8rem 0;
+    }
+
+    .total {
+      font-size: 1.3rem;
+      font-weight: 800;
+      border-top: 2px solid #C6A43F;
+      padding-top: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-valider {
+      width: 100%;
+      background: linear-gradient(135deg, #C6A43F, #B38F2E);
+      border: none;
+      border-radius: 2rem;
+      padding: 16px;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #1F2F1F;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: all 0.3s;
+    }
+
+    .btn-valider:hover {
+      transform: scale(1.01);
+      background: #D4B04A;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 1rem;
+      color: #92A389;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    /* Sélection produit */
+    .product-options { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.2rem; }
+
+    .product-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 2px solid #E2E9DA;
+      border-radius: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      position: relative;
+    }
+    .product-option:hover:not(.epuise) { border-color: #C6A43F; }
+    .product-option.selected { border-color: #C6A43F; background: #FFFBF0; }
+    .product-option.epuise { opacity: 0.45; cursor: not-allowed; background: #F5F5F5; }
+
+    .product-option input[type=checkbox] { accent-color: #C6A43F; width: 18px; height: 18px; flex-shrink: 0; }
+
+    .option-label { flex: 1; font-weight: 600; font-size: 0.95rem; }
+    .option-desc  { font-size: 0.78rem; color: #92A389; font-weight: 400; }
+    .option-prix  { font-weight: 800; color: #2F4B3C; white-space: nowrap; }
+
+    /* Quantité par produit dans l'option */
+    .option-qty { display: none; align-items: center; gap: 0; border: 1.5px solid #E2E9DA; border-radius: 0.8rem; overflow: hidden; margin-top: 8px; flex-shrink: 0; }
+    .product-option.selected .option-qty { display: flex; }
+    .oqty-btn { background: #F4F7F1; border: none; width: 30px; height: 30px; font-size: 1rem; cursor: pointer; color: #4A735C; font-weight: 700; }
+    .oqty-btn:hover { background: #E2EDD9; }
+    .oqty-val { width: 36px; text-align: center; font-weight: 700; font-size: 0.9rem; color: #3A8A4A; border: none; outline: none; background: transparent; padding: 0; }
+    .oqty-val::-webkit-inner-spin-button, .oqty-val::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .oqty-val[type=number] { -moz-appearance: textfield; }
+
+    .badge-epuise {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #E8E8E8;
+      color: #999;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* Quantité */
+    .qty-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.2rem; }
+    .qty-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #7D8F76; white-space: nowrap; }
+    .qty-ctrl { display: flex; align-items: center; gap: 0; border: 1.5px solid #E2E9DA; border-radius: 1rem; overflow: hidden; }
+    .qty-btn { background: #F4F7F1; border: none; width: 38px; height: 38px; font-size: 1.1rem; cursor: pointer; color: #4A735C; font-weight: 700; transition: background 0.15s; }
+    .qty-btn:hover { background: #E2EDD9; }
+    .qty-val { width: 42px; text-align: center; font-weight: 700; font-size: 1rem; color: #3A8A4A; border: none; outline: none; background: transparent; padding: 0; }
+    .qty-val::-webkit-inner-spin-button, .qty-val::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .qty-val[type=number] { -moz-appearance: textfield; }
+
+    @media (max-width: 768px) {
+      .summary-section { position: static; }
+      .row-2 { flex-direction: column; }
+      .product-option { flex-wrap: wrap; }
+      .option-qty { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <a href="index.html" class="logo">
+      <div class="logo-icon"><i class="fas fa-leaf"></i></div>
+      <div class="logo-text">ORAVIE</div>
+    </a>
+    <div><i class="fas fa-lock"></i> Paiement sécurisé</div>
+  </div>
+
+  <div class="checkout-grid">
+    <!-- Formulaire coordonnées -->
+    <div class="form-section">
+      <h2><i class="fas fa-user"></i> Informations de livraison</h2>
+      <form id="orderForm">
+        <div class="form-group">
+          <label>Civilité</label>
+          <select name="civilite">
+            <option>Madame</option>
+            <option>Monsieur</option>
+          </select>
+        </div>
+        <div class="row-2">
+          <div class="form-group"><label>Prénom</label><input type="text" name="prenom" placeholder="Prénom" required></div>
+          <div class="form-group"><label>Nom</label><input type="text" name="nom" placeholder="Nom" required></div>
+        </div>
+        <div class="form-group"><label>Email</label><input type="email" name="email" placeholder="mail@email.com" required></div>
+        <div class="form-group"><label>Téléphone</label><input type="tel" name="telephone" placeholder="XX XX XX XX" required></div>
+        <div class="form-group"><label>Adresse</label><input type="text" name="adresse" placeholder="adresse" required></div>
+        <div class="row-2">
+          <div class="form-group"><label>Code postal</label><input type="text" name="code_postal" placeholder="Code postal" required></div>
+          <div class="form-group"><label>Ville</label><input type="text" name="ville" placeholder="Ville" required></div>
+        </div>
+        <div class="form-group"><label>Instructions de livraison (optionnel)</label><textarea rows="2" name="instructions" placeholder="Code digicode, étage..."></textarea></div>
+      </form>
+    </div>
+
+    <!-- Résumé commande -->
+    <div class="summary-section">
+      <h2><i class="fas fa-shopping-bag"></i> Votre commande</h2>
+
+      <!-- Sélection format -->
+      <div class="form-group">
+        <label>Format &amp; Quantité</label>
+        <div class="product-options" id="productOptions">
+          <div style="color:#92A389; font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>
+        </div>
+      </div>
+
+      <!-- Récap prix -->
+      <div class="price-row total" style="margin-top:0.5rem;"><span>TOTAL TTC</span><span id="prixTotal">—</span></div>
+
+      <div id="formMessage" style="display:none; padding:12px 16px; border-radius:1rem; margin-top:1rem; font-size:0.9rem; font-weight:600; text-align:center;"></div>
+      <button class="btn-valider" id="submitBtn" type="button" disabled>
+        <i class="fas fa-check-circle"></i> VALIDER MA COMMANDE
+      </button>
+      <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Retour au produit</a>
+      <p style="font-size:0.7rem; text-align:center; margin-top:1rem; color:#92A389;">
+        <i class="fas fa-lock"></i> Données sécurisées
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Chargement des produits ──────────────────────────────────────
+  fetch('produits.php')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var container = document.getElementById('productOptions');
+      container.innerHTML = '';
+
+      if (!data.success || !data.produits.length) {
+        container.innerHTML = '<p style="color:#B03A2E;">Aucun produit disponible.</p>';
+        return;
+      }
+
+      data.produits.forEach(function(p) {
+        var epuise = parseInt(p.stock) <= 0;
+        var div = document.createElement('div');
+        div.className = 'product-option' + (epuise ? ' epuise' : '');
+        div.dataset.id   = p.id;
+        div.dataset.prix = p.prix;
+        div.dataset.stock = p.stock;
+
+        div.innerHTML =
+          '<input type="checkbox" id="prod' + p.id + '"' + (epuise ? ' disabled' : '') + '>' +
+          '<label for="prod' + p.id + '" style="flex:1; cursor:' + (epuise ? 'not-allowed' : 'pointer') + '; pointer-events:none;">' +
+          '  <div class="option-label">' + p.nom + '</div>' +
+          '  <div class="option-desc">' + p.description + '</div>' +
+          '</label>' +
+          '<div class="option-qty">' +
+          '  <button type="button" class="oqty-btn" data-action="minus" data-id="' + p.id + '">−</button>' +
+          '  <input type="number" class="oqty-val" id="qty_' + p.id + '" value="1" min="1" max="10" readonly>' +
+          '  <button type="button" class="oqty-btn" data-action="plus" data-id="' + p.id + '" data-stock="' + p.stock + '">+</button>' +
+          '</div>' +
+          '<span class="option-prix" id="pu_' + p.id + '">' + parseFloat(p.prix).toFixed(2) + ' DT</span>' +
+          (epuise ? '<span class="badge-epuise">Épuisé</span>' : '');
+
+        if (!epuise) {
+          div.addEventListener('click', function(e) {
+            if (e.target.closest('.option-qty')) return;
+            var cb = div.querySelector('input[type=checkbox]');
+            if (e.target !== cb) {
+              cb.checked = !cb.checked;
+            }
+            div.classList.toggle('selected', cb.checked);
+            updateTotal();
+            document.getElementById('submitBtn').disabled = !document.querySelector('.product-option.selected');
+          });
+        }
+
+        container.appendChild(div);
+      });
+
+      // Boutons quantité
+      document.getElementById('productOptions').addEventListener('click', function(e) {
+        var btn = e.target.closest('.oqty-btn');
+        if (!btn) return;
+        var id  = btn.dataset.id;
+        var inp = document.getElementById('qty_' + id);
+        var v   = parseInt(inp.value);
+        if (btn.dataset.action === 'minus' && v > 1)  { inp.value = v - 1; }
+        if (btn.dataset.action === 'plus'  && v < 10 && v < parseInt(btn.dataset.stock)) { inp.value = v + 1; }
+        updateTotal();
+      });
+    })
+    .catch(function() {
+      document.getElementById('productOptions').innerHTML =
+        '<p style="color:#B03A2E;">Erreur de chargement des produits.</p>';
+    });
+
+  function updateTotal() {
+    var total = 0;
+    document.querySelectorAll('.product-option.selected').forEach(function(div) {
+      var prix = parseFloat(div.dataset.prix);
+      var qte  = parseInt(document.getElementById('qty_' + div.dataset.id).value);
+      total += prix * qte;
+    });
+    document.getElementById('prixTotal').textContent = total > 0 ? total.toFixed(2) + ' DT' : '—';
+  }
+
+  // ── Soumission ──────────────────────────────────────────────────
+  document.getElementById('submitBtn').addEventListener('click', function () {
+    var form   = document.getElementById('orderForm');
+    var msgBox = document.getElementById('formMessage');
+    var btn    = this;
+
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    var selections = [];
+    document.querySelectorAll('.product-option.selected').forEach(function(div) {
+      selections.push({
+        produit_id: div.dataset.id,
+        quantite:   document.getElementById('qty_' + div.dataset.id).value
+      });
+    });
+
+    if (!selections.length) {
+      alert('Veuillez sélectionner au moins un format.'); return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+    msgBox.style.display = 'none';
+
+    var fd = new FormData(form);
+    fd.append('produits', JSON.stringify(selections));
+
+    fetch('commander.php', { method: 'POST', body: fd })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        msgBox.style.display = 'block';
+        if (data.success) {
+          window.location.href = 'confirmation.html?id=' + encodeURIComponent(data.id) + '&total=' + encodeURIComponent(data.prix_total);
+        } else {
+          msgBox.style.background = '#FDF0F0';
+          msgBox.style.color      = '#B03A2E';
+          msgBox.style.border     = '1.5px solid #F1948A';
+          msgBox.innerHTML = '&#9888; ' + data.message;
+          btn.disabled = false;
+        }
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> VALIDER MA COMMANDE';
+      })
+      .catch(function() {
+        msgBox.style.display    = 'block';
+        msgBox.style.background = '#FDF0F0';
+        msgBox.style.color      = '#B03A2E';
+        msgBox.style.border     = '1.5px solid #F1948A';
+        msgBox.innerHTML        = '&#9888; Erreur réseau. Veuillez réessayer.';
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> VALIDER MA COMMANDE';
+        btn.disabled  = false;
+      });
+  });
+</script>
+</body>
+</html>

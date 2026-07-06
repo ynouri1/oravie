@@ -16,6 +16,14 @@ try {
     $lots = [];
 }
 
+// Charger les praticiens
+$praticiens = [];
+try {
+    $praticiens = $pdo->query("SELECT id, prenom, nom, specialite FROM praticiens WHERE actif = 1 ORDER BY nom, prenom ASC")->fetchAll();
+} catch (Exception $e) {
+    $praticiens = [];
+}
+
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['statut'])) {
     $validStatuts = ['nouvelle', 'confirmée', 'expédiée', 'livrée', 'annulée'];
@@ -34,7 +42,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
     header("Location: commande.php?id=$id&updated=1"); exit;
 }
 
-$stmt = $pdo->prepare("SELECT * FROM commandes WHERE id = :id");
+// Handle praticien assignment
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_praticien') {
+    $praticien_id = filter_var($_POST['praticien_id'] ?? '', FILTER_VALIDATE_INT) ?: null;
+    $pdo->prepare("UPDATE commandes SET praticien_id = :pid WHERE id = :id")
+        ->execute([':pid' => $praticien_id, ':id' => $id]);
+    header("Location: commande.php?id=$id&updated=1"); exit;
+}
+
+// Vérifier si les colonnes/tables requises existent
+$hasPraticienColumn = false;
+$hasPraticiens = false;
+try {
+    $pdo->query("SELECT praticien_id FROM commandes LIMIT 1");
+    $hasPraticienColumn = true;
+} catch (Exception $e) {
+    // Colonne n'existe pas
+}
+
+try {
+    $pdo->query("SELECT 1 FROM praticiens LIMIT 1");
+    $hasPraticiens = true;
+} catch (Exception $e) {
+    // Table n'existe pas
+}
+
+$sql = "SELECT c.*";
+if ($hasPraticienColumn && $hasPraticiens) {
+    $sql .= ", COALESCE(CONCAT(p.prenom, ' ', p.nom), NULL) AS praticien_nom,
+             COALESCE(p.specialite, NULL) AS praticien_specialite";
+} else {
+    $sql .= ", NULL AS praticien_nom, NULL AS praticien_specialite";
+}
+$sql .= " FROM commandes c";
+if ($hasPraticienColumn && $hasPraticiens) {
+    $sql .= " LEFT JOIN praticiens p ON c.praticien_id = p.id";
+}
+$sql .= " WHERE c.id = :id";
+
+$stmt = $pdo->prepare($sql);
 $stmt->execute([':id' => $id]);
 $row = $stmt->fetch();
 if (!$row) { header('Location: dashboard.php'); exit; }
@@ -139,6 +185,20 @@ $lignes = $d['lignes'] ?? [];
           <span class="info-val"><?= nl2br(htmlspecialchars($val)) ?></span>
         </div>
         <?php endforeach; ?>
+        <?php if ($row['praticien_nom']): ?>
+        <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #E2E9DA;">
+          <div class="info-row">
+            <span class="info-label"><i class="fas fa-stethoscope"></i> Praticien</span>
+            <span class="info-val"><?= htmlspecialchars($row['praticien_nom']) ?></span>
+          </div>
+          <?php if ($row['praticien_specialite']): ?>
+          <div class="info-row">
+            <span class="info-label">Spécialité</span>
+            <span class="info-val"><?= htmlspecialchars($row['praticien_specialite']) ?></span>
+          </div>
+          <?php endif; ?>
+        </div>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -161,9 +221,17 @@ $lignes = $d['lignes'] ?? [];
           <?php endforeach; ?>
           </tbody>
           <tfoot>
+            <tr style="font-weight:600; background:#F4F7F1;">
+              <td colspan="3">Sous-total</td>
+              <td><?= number_format((float)($d['prix_total'] ?? 0), 2) ?> DT</td>
+            </tr>
+            <tr style="font-weight:600; background:#F4F7F1;">
+              <td colspan="3">Frais de livraison</td>
+              <td><?= number_format((float)($d['frais_livraison'] ?? 8.00), 2) ?> DT</td>
+            </tr>
             <tr class="total-row">
               <td colspan="3">TOTAL TTC</td>
-              <td><?= number_format((float)($d['prix_total'] ?? 0), 2) ?> DT</td>
+              <td><?= number_format((float)($d['prix_total_ttc'] ?? ((float)($d['prix_total'] ?? 0) + 8.00)), 2) ?> DT</td>
             </tr>
           </tfoot>
         </table>
@@ -191,6 +259,24 @@ $lignes = $d['lignes'] ?? [];
             <?php foreach ($lots as $lot): ?>
             <option value="<?= $lot['id'] ?>" <?= ($row['lot_id'] ?? null) == $lot['id'] ? 'selected' : '' ?>>
               <?= htmlspecialchars($lot['nom'] ?: 'Lot ' . $lot['numero']) ?>
+            </option>
+            <?php endforeach; ?>
+          </select>
+          <button type="submit" class="btn-save"><i class="fas fa-save"></i> Enregistrer</button>
+        </form>
+      </div>
+      <?php endif; ?>
+
+      <?php if (!empty($praticiens)): ?>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-stethoscope"></i> Praticien prescripteur</div>
+        <form method="POST" class="status-form">
+          <input type="hidden" name="action" value="update_praticien">
+          <select name="praticien_id">
+            <option value="">— Aucun praticien —</option>
+            <?php foreach ($praticiens as $p): ?>
+            <option value="<?= $p['id'] ?>" <?= ($row['praticien_id'] ?? null) == $p['id'] ? 'selected' : '' ?>>
+              <?= htmlspecialchars($p['prenom'] . ' ' . $p['nom'] . ($p['specialite'] ? ' (' . $p['specialite'] . ')' : '')) ?>
             </option>
             <?php endforeach; ?>
           </select>

@@ -1,3 +1,21 @@
+<?php
+session_start();
+
+// Récupérer les données de la commande depuis la session
+$orderId = $_SESSION['commande']['id'] ?? null;
+$orderSubtotal = $_SESSION['commande']['prix_total'] ?? null;
+$orderShipping = $_SESSION['commande']['frais_livraison'] ?? null;
+$orderTotal = $_SESSION['commande']['prix_total_ttc'] ?? null;
+
+// Si pas de commande en session, rediriger vers l'accueil
+if (!$orderId) {
+    header('Location: index.html');
+    exit;
+}
+
+// Nettoyer la session après affichage
+unset($_SESSION['commande']);
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -112,10 +130,9 @@
       padding: 1.2rem 1.5rem;
       margin-bottom: 2rem;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
     }
 
     .order-info .label {
@@ -178,26 +195,26 @@
     <h1 class="title">Félicitations !</h1>
     <p class="subtitle">Votre commande a bien été prise en charge.<br>Nous vous contacterons très prochainement.</p>
 
-    <div class="order-info" style="flex-direction:column;align-items:stretch;gap:1rem;">
+    <div class="order-info">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
           <div class="label">Numéro de commande</div>
-          <div class="value" id="orderId">—</div>
-          <div style="font-size:0.75rem;color:#92A389;margin-top:3px;" id="orderDate"></div>
+          <div class="value">#<?= htmlspecialchars($orderId) ?></div>
+          <div style="font-size:0.75rem;color:#92A389;margin-top:3px;"><?= date('d F Y', time()) ?></div>
         </div>
       </div>
       <div style="border-top:1px solid #DCE9D4;padding-top:1rem;">
         <div style="display:flex;justify-content:space-between;margin-bottom:0.8rem;font-size:0.9rem;">
           <div class="label">Sous-total</div>
-          <div style="color:#2F4B3C;font-weight:600;" id="orderSubtotal">—</div>
+          <div style="color:#2F4B3C;font-weight:600;"><?= number_format((float)$orderSubtotal, 2) ?> DT</div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-size:0.9rem;">
           <div class="label">Frais de livraison</div>
-          <div style="color:#2F4B3C;font-weight:600;" id="orderShipping">—</div>
+          <div style="color:#2F4B3C;font-weight:600;"><?= number_format((float)$orderShipping, 2) ?> DT</div>
         </div>
         <div style="display:flex;justify-content:space-between;">
           <div class="label" style="font-weight:700;color:#2F4B3C;">TOTAL</div>
-          <div class="value" id="orderTotal" style="font-size:1.1rem;">—</div>
+          <div class="value" style="font-size:1.1rem;"><?= number_format((float)$orderTotal, 2) ?> DT</div>
         </div>
       </div>
     </div>
@@ -211,28 +228,5 @@
     </a>
   </div>
 
-  <script>
-    var params = new URLSearchParams(window.location.search);
-    var id       = params.get('id');
-    var subtotal = params.get('subtotal');
-    var shipping = params.get('shipping');
-    var total    = params.get('total');
-
-    if (id) {
-      document.getElementById('orderId').textContent = '#' + id;
-    }
-    var now = new Date();
-    var dateStr = now.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
-    document.getElementById('orderDate').textContent = dateStr;
-    if (subtotal) {
-      document.getElementById('orderSubtotal').textContent = parseFloat(subtotal).toFixed(2) + ' DT';
-    }
-    if (shipping) {
-      document.getElementById('orderShipping').textContent = parseFloat(shipping).toFixed(2) + ' DT';
-    }
-    if (total) {
-      document.getElementById('orderTotal').textContent = parseFloat(total).toFixed(2) + ' DT';
-    }
-  </script>
 </body>
 </html>

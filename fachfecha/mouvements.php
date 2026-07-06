@@ -223,6 +223,8 @@ $lotColors = ['#2F4B3C','#C6A43F','#3B82F6','#8B5CF6','#F97316','#EF4444','#10B9
   <div class="nav-links">
     <a href="dashboard.php"><i class="fas fa-list-alt"></i> Commandes</a>
     <a href="produits.php"><i class="fas fa-box"></i> Produits</a>
+    <a href="praticiens.php"><i class="fas fa-stethoscope"></i> Praticiens</a>
+    <a href="stats.php"><i class="fas fa-chart-bar"></i> Statistiques</a>
     <a href="depenses.php"><i class="fas fa-receipt"></i> Dépenses</a>
     <a href="mouvements.php" class="active"><i class="fas fa-boxes"></i> Stock lots</a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>

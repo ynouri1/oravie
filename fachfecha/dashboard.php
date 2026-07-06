@@ -24,9 +24,33 @@ $stats = $pdo->query("
     SELECT
         COUNT(*) AS total,
         SUM(CASE WHEN statut = 'nouvelle' THEN 1 ELSE 0 END) AS nouvelles,
-        COALESCE(SUM(CASE WHEN statut = 'livrée' THEN CAST(donnees->>'$.prix_total' AS DECIMAL(10,2)) ELSE 0 END), 0) AS ca_total
+        COALESCE(SUM(CASE WHEN statut = 'livrée' THEN prix_total ELSE 0 END), 0) AS ca_total
     FROM commandes
 ")->fetch();
+
+// Comptage par statut
+$statusCounts = [];
+foreach ($pdo->query("SELECT statut, COUNT(*) AS n FROM commandes GROUP BY statut")->fetchAll() as $r) {
+    $statusCounts[$r['statut']] = $r['n'];
+}
+
+// Vérifier si la colonne praticien_id existe dans commandes
+$hasPraticienColumn = false;
+try {
+    $pdo->query("SELECT praticien_id FROM commandes LIMIT 1");
+    $hasPraticienColumn = true;
+} catch (Exception $e) {
+    // Colonne n'existe pas
+}
+
+// Vérifier si la table praticiens existe
+$hasPraticiens = false;
+try {
+    $pdo->query("SELECT 1 FROM praticiens LIMIT 1");
+    $hasPraticiens = true;
+} catch (Exception $e) {
+    // Table doesn't exist
+}
 
 // Comptage par statut
 $statusCounts = [];
@@ -37,13 +61,15 @@ foreach ($pdo->query("SELECT statut, COUNT(*) AS n FROM commandes GROUP BY statu
 // Liste des commandes
 $sql = "
     SELECT
-        id, date_commande, statut,
-        donnees->>'$.prenom'     AS prenom,
-        donnees->>'$.nom'        AS nom,
-        donnees->>'$.telephone'  AS telephone,
-        donnees->>'$.prix_total' AS prix_total,
-        donnees->>'$.lignes'     AS lignes_json
-    FROM commandes
+        c.id, c.date_commande, c.statut,
+        c.donnees->>'$.prenom'     AS prenom,
+        c.donnees->>'$.nom'        AS nom,
+        c.donnees->>'$.telephone'  AS telephone,
+        c.prix_total               AS prix_total,
+        c.donnees->>'$.lignes'     AS lignes_json
+        " . ($hasPraticienColumn && $hasPraticiens ? ", COALESCE(CONCAT(p.prenom, ' ', p.nom), '-') AS praticien_nom" : ", '-' AS praticien_nom") . "
+    FROM commandes c
+    " . ($hasPraticienColumn && $hasPraticiens ? "LEFT JOIN praticiens p ON c.praticien_id = p.id" : "") . "
 ";
 if ($filterStatut && in_array($filterStatut, $validStatuts)) {
     $stmt = $pdo->prepare($sql . " WHERE statut = :s ORDER BY date_commande DESC");
@@ -114,6 +140,8 @@ $commandes = $stmt->fetchAll();
   <div class="nav-links">
     <a href="dashboard.php" class="active"><i class="fas fa-list-alt"></i> Commandes</a>
     <a href="produits.php"><i class="fas fa-box"></i> Produits</a>
+    <a href="praticiens.php"><i class="fas fa-stethoscope"></i> Praticiens</a>
+    <a href="stats.php"><i class="fas fa-chart-bar"></i> Statistiques</a>
     <a href="depenses.php"><i class="fas fa-receipt"></i> Dépenses</a>
     <a href="mouvements.php"><i class="fas fa-boxes"></i> Stock lots</a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
@@ -156,6 +184,7 @@ $commandes = $stmt->fetchAll();
           <th>#</th>
           <th>Date</th>
           <th>Client</th>
+          <th>Praticien</th>
           <th>Produits</th>
           <th>Total</th>
           <th>Statut</th>
@@ -174,6 +203,7 @@ $commandes = $stmt->fetchAll();
             <strong><?= htmlspecialchars($c['prenom'] . ' ' . $c['nom']) ?></strong>
             <small><?= htmlspecialchars($c['telephone']) ?></small>
           </td>
+          <td><?= htmlspecialchars($c['praticien_nom']) ?></td>
           <td class="td-produits"><?= htmlspecialchars($prodSummary ?: '—') ?></td>
           <td class="td-total"><?= number_format((float)$c['prix_total'], 2) ?> DT</td>
           <td><?= statusBadge($c['statut']) ?></td>

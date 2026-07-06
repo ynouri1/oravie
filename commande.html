@@ -312,6 +312,12 @@
           <div class="form-group"><label>Ville</label><input type="text" name="ville" placeholder="Ville" required></div>
         </div>
         <div class="form-group"><label>Instructions de livraison (optionnel)</label><textarea rows="2" name="instructions" placeholder="Code digicode, étage..."></textarea></div>
+        <div class="form-group">
+          <label>Praticien prescripteur (optionnel)</label>
+          <select name="praticien_id" id="praticienSelect">
+            <option value="">-- Sélectionnez un praticien --</option>
+          </select>
+        </div>
       </form>
     </div>
 
@@ -452,7 +458,7 @@
       .then(function(data) {
         msgBox.style.display = 'block';
         if (data.success) {
-          window.location.href = 'confirmation.html?id=' + encodeURIComponent(data.id) + '&total=' + encodeURIComponent(data.prix_total);
+          window.location.href = 'confirmation.php';
         } else {
           msgBox.style.background = '#FDF0F0';
           msgBox.style.color      = '#B03A2E';
@@ -472,6 +478,24 @@
         btn.disabled  = false;
       });
   });
+
+  // ── Chargement des praticiens ────────────────────────────────────
+  fetch('praticiens_api.php')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var select = document.getElementById('praticienSelect');
+      if (data.success && data.praticiens.length > 0) {
+        data.praticiens.forEach(function(p) {
+          var option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = p.prenom + ' ' + p.nom + (p.specialite ? ' (' + p.specialite + ')' : '');
+          select.appendChild(option);
+        });
+      }
+    })
+    .catch(function(e) {
+      // Silencieux si erreur
+    });
 </script>
 </body>
 </html>

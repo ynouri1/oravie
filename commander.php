@@ -1,4 +1,5 @@
 <?php
+session_start();
 ob_start();
 header('Content-Type: application/json; charset=UTF-8');
 
@@ -29,6 +30,8 @@ $adresse      = trim(strip_tags($_POST['adresse'] ?? ''));
 $code_postal  = trim(strip_tags($_POST['code_postal'] ?? ''));
 $ville        = trim(strip_tags($_POST['ville'] ?? ''));
 $instructions = trim(strip_tags($_POST['instructions'] ?? ''));
+$praticien_id = filter_var($_POST['praticien_id'] ?? '', FILTER_VALIDATE_INT);
+if (!$praticien_id) $praticien_id = null;
 
 // Vérification des champs obligatoires
 if (!$prenom || !$nom || !$email || !$telephone || !$adresse || !$code_postal || !$ville) {
@@ -116,6 +119,11 @@ try {
     }
     $prix_total = round($prix_total, 2);
 
+    // Ajouter frais de livraison (8 dinars)
+    $frais_livraison = 8.00;
+    $prix_total_avec_frais = $prix_total + $frais_livraison;
+    $prix_total_avec_frais = round($prix_total_avec_frais, 2);
+
     // Regroupement de toutes les données en JSON
     $donnees = json_encode([
         'civilite'     => $civilite,
@@ -129,15 +137,19 @@ try {
         'instructions' => $instructions,
         'lignes'       => $lignesCommande,
         'prix_total'   => $prix_total,
+        'frais_livraison' => $frais_livraison,
+        'prix_total_ttc' => $prix_total_avec_frais,
     ], JSON_UNESCAPED_UNICODE);
 
     // Insertion de la commande
     $stmt = $pdo->prepare("
-        INSERT INTO commandes (donnees) VALUES (:donnees)
+        INSERT INTO commandes (donnees, praticien_id, prix_total) VALUES (:donnees, :praticien_id, :prix)
     ");
 
     $stmt->execute([
         ':donnees' => $donnees,
+        ':praticien_id' => $praticien_id,
+        ':prix' => $prix_total,
     ]);
 
     $newId = $pdo->lastInsertId();
@@ -181,10 +193,20 @@ try {
             <th style="padding:8px 12px;text-align:right;font-size:0.8rem;color:#7D8F76;">Sous-total</th>
           </tr></thead>
           <tbody>' . $lignesHtml . '</tbody>
-          <tfoot><tr style="background:#FFFBF0;">
-            <td colspan="3" style="padding:12px;font-weight:bold;font-size:1rem;">TOTAL TTC</td>
-            <td style="padding:12px;font-weight:bold;font-size:1.1rem;text-align:right;color:#2F4B3C;">' . number_format($prix_total, 2) . ' DT</td>
-          </tr></tfoot>
+          <tfoot>
+            <tr style="background:#F4F7F1;">
+              <td colspan="3" style="padding:12px;font-weight:bold;font-size:0.95rem;">Sous-total</td>
+              <td style="padding:12px;font-weight:bold;font-size:0.95rem;text-align:right;color:#2F4B3C;">' . number_format($prix_total, 2) . ' DT</td>
+            </tr>
+            <tr style="background:#F4F7F1;">
+              <td colspan="3" style="padding:12px;font-weight:bold;font-size:0.95rem;">Frais de livraison</td>
+              <td style="padding:12px;font-weight:bold;font-size:0.95rem;text-align:right;color:#2F4B3C;">' . number_format($frais_livraison, 2) . ' DT</td>
+            </tr>
+            <tr style="background:#FFFBF0;">
+              <td colspan="3" style="padding:12px;font-weight:bold;font-size:1rem;">TOTAL TTC</td>
+              <td style="padding:12px;font-weight:bold;font-size:1.1rem;text-align:right;color:#2F4B3C;">' . number_format($prix_total_avec_frais, 2) . ' DT</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
       <div style="background:#F4F7F1;padding:12px 24px;border-radius:0 0 8px 8px;font-size:0.75rem;color:#92A389;text-align:center;">
@@ -217,7 +239,7 @@ try {
         $mail->Subject = 'Nouvelle commande #' . $newId . ' - ' . $prenom . ' ' . $nom;
         $mail->isHTML(true);
         $mail->Body    = $mailBody;
-        $mail->AltBody = "Nouvelle commande #$newId\nClient : $civilite $prenom $nom\nTel : $telephone\nAdresse : $adresse, $code_postal $ville\nTotal : " . number_format($prix_total, 2) . " DT";
+        $mail->AltBody = "Nouvelle commande #$newId\nClient : $civilite $prenom $nom\nTel : $telephone\nAdresse : $adresse, $code_postal $ville\nSous-total : " . number_format($prix_total, 2) . " DT\nFrais de livraison : " . number_format($frais_livraison, 2) . " DT\nTotal : " . number_format($prix_total_avec_frais, 2) . " DT";
         $mail->send();
     } catch (Exception $e) {
         // Silencieux — la commande est déjà enregistrée
@@ -252,10 +274,20 @@ try {
                     <td style="padding:8px 10px;border-bottom:1px solid #ECF0E5;text-align:right;">' . number_format($l['sous_total'], 2) . ' DT</td>
                   </tr>', $lignesCommande)) . '
                 </tbody>
-                <tfoot><tr style="background:#FFFBF0;">
-                  <td colspan="2" style="padding:10px;font-weight:700;">TOTAL</td>
-                  <td style="padding:10px;font-weight:800;text-align:right;color:#2F4B3C;">' . number_format($prix_total, 2) . ' DT</td>
-                </tr></tfoot>
+                <tfoot>
+                  <tr style="background:#F4F7F1;">
+                    <td colspan="2" style="padding:10px;font-weight:700;font-size:0.9rem;">Sous-total</td>
+                    <td style="padding:10px;font-weight:700;text-align:right;color:#2F4B3C;">' . number_format($prix_total, 2) . ' DT</td>
+                  </tr>
+                  <tr style="background:#F4F7F1;">
+                    <td colspan="2" style="padding:10px;font-weight:700;font-size:0.9rem;">Frais de livraison</td>
+                    <td style="padding:10px;font-weight:700;text-align:right;color:#2F4B3C;">' . number_format($frais_livraison, 2) . ' DT</td>
+                  </tr>
+                  <tr style="background:#FFFBF0;">
+                    <td colspan="2" style="padding:10px;font-weight:700;">TOTAL</td>
+                    <td style="padding:10px;font-weight:800;text-align:right;color:#2F4B3C;">' . number_format($prix_total_avec_frais, 2) . ' DT</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
 
@@ -294,19 +326,30 @@ try {
             $mailClient->Subject = 'Votre commande ORAVIE #' . $newId . ' — Confirmation';
             $mailClient->isHTML(true);
             $mailClient->Body    = $clientBody;
-            $mailClient->AltBody = "Bonjour $prenom $nom,\n\nMerci pour votre commande #$newId.\nTotal : " . number_format($prix_total, 2) . " DT\n\nNous vous contacterons prochainement.\n\nORAVIE\ncontact@oravie.tn";
+            $mailClient->AltBody = "Bonjour $prenom $nom,\n\nMerci pour votre commande #$newId.\nSous-total : " . number_format($prix_total, 2) . " DT\nFrais de livraison : " . number_format($frais_livraison, 2) . " DT\nTotal : " . number_format($prix_total_avec_frais, 2) . " DT\n\nNous vous contacterons prochainement.\n\nORAVIE\ncontact@oravie.tn";
             $mailClient->send();
         } catch (Exception $e) {
             // Silencieux — la commande est déjà enregistrée
         }
     }
 
+    // Stocker les données de commande dans la session
+    $_SESSION['commande'] = [
+        'id'           => $newId,
+        'prix_total'   => $prix_total,
+        'frais_livraison' => $frais_livraison,
+        'prix_total_ttc' => $prix_total_avec_frais,
+        'timestamp'    => time(),
+    ];
+
     ob_clean();
     echo json_encode([
-        'success'    => true,
-        'message'    => 'Commande enregistr\u00e9e avec succ\u00e8s !',
-        'id'         => $newId,
-        'prix_total' => $prix_total,
+        'success'      => true,
+        'message'      => 'Commande enregistr\u00e9e avec succ\u00e8s !',
+        'id'           => $newId,
+        'prix_total'   => $prix_total,
+        'frais_livraison' => $frais_livraison,
+        'prix_total_ttc' => $prix_total_avec_frais,
     ]);
 
 } catch (PDOException $e) {

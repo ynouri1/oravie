@@ -44,18 +44,48 @@ $stats_statut = $pdo->query("
 // Top praticiens (si table existe)
 $top_praticiens = [];
 if ($hasPraticiens) {
-    $top_praticiens = $pdo->query("
+    // Récupérer toutes les commandes livrées avec les données JSON
+    $commandes_praticiens = $pdo->query("
         SELECT
             COALESCE(CONCAT(p.prenom, ' ', p.nom), 'Sans praticien') AS praticien,
-            COUNT(c.id) AS nb_commandes,
-            COALESCE(SUM(c.prix_total), 0) AS ca
+            c.prix_total,
+            c.donnees
         FROM commandes c
         LEFT JOIN praticiens p ON c.praticien_id = p.id
         WHERE c.statut = 'livrée'
-        GROUP BY c.praticien_id
-        ORDER BY ca DESC
-        LIMIT 5
+        ORDER BY c.praticien_id DESC
     ")->fetchAll();
+    
+    // Traiter et regrouper par praticien
+    $praticiens_data = [];
+    foreach ($commandes_praticiens as $cmd) {
+        $praticien = $cmd['praticien'];
+        if (!isset($praticiens_data[$praticien])) {
+            $praticiens_data[$praticien] = [
+                'praticien' => $praticien,
+                'nb_commandes' => 0,
+                'ca' => 0,
+                'nb_sprays' => 0
+            ];
+        }
+        
+        $praticiens_data[$praticien]['nb_commandes']++;
+        $praticiens_data[$praticien]['ca'] += (float)$cmd['prix_total'];
+        
+        // Compter les sprays depuis le JSON
+        $donnees = json_decode($cmd['donnees'], true);
+        if (isset($donnees['lignes']) && is_array($donnees['lignes'])) {
+            foreach ($donnees['lignes'] as $ligne) {
+                $praticiens_data[$praticien]['nb_sprays'] += (int)($ligne['quantite'] ?? 0);
+            }
+        }
+    }
+    
+    // Trier par CA décroissant et limiter aux 5 premiers
+    uasort($praticiens_data, function($a, $b) {
+        return $b['ca'] - $a['ca'];
+    });
+    $top_praticiens = array_slice($praticiens_data, 0, 5);
 }
 
 // Évolution CA par mois (6 derniers mois)
@@ -158,6 +188,42 @@ $stock_info = $pdo->query("
     .chart-bar { flex:1; background:#4A735C; border-radius:0.5rem 0.5rem 0 0; min-height:10px; position:relative; }
     .chart-bar:hover { background:#2F4B3C; }
     .chart-label { position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:0.7rem; color:#92A389; white-space:nowrap; }
+
+    @media (max-width: 768px) {
+      body { padding: 0; }
+      nav { padding: 0 1rem; flex-wrap: wrap; height: auto; }
+      .nav-brand { flex: 1; min-width: 200px; padding: 0.75rem 0; }
+      .nav-links { width: 100%; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }
+      .nav-links a { flex: 1; min-width: 100px; padding: 0.5rem; font-size: 0.7rem; text-align: center; }
+      .main { max-width: 100%; padding: 1.5rem 1rem; }
+      .page-title { font-size: 1.2rem; margin-bottom: 1rem; }
+      .grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+      .stat-card { padding: 0.9rem 1rem; }
+      .stat-val { font-size: 1.5rem; }
+      .stat-label { font-size: 0.65rem; }
+      .grid2 { grid-template-columns: 1fr; gap: 1.5rem; }
+      .chart-container { height: 150px; padding: 1rem; }
+      
+      /* Table - keep single line with horizontal scroll */
+      table { display: block; overflow-x: auto; }
+      thead { display: table-header-group; }
+      thead th { padding: 10px 12px; font-size: 0.65rem; }
+      tbody { display: table-row-group; }
+      tbody tr { display: table-row; width: 100%; }
+      td { padding: 10px 12px; font-size: 0.75rem; display: table-cell; }
+    }
+    @media (max-width: 480px) {
+      nav { padding: 0 0.75rem; }
+      .main { padding: 1rem 0.75rem; }
+      .page-title { font-size: 1rem; }
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-card { padding: 0.8rem; }
+      .stat-val { font-size: 1.3rem; }
+      
+      table { font-size: 0.7rem; }
+      thead th { padding: 8px 10px; font-size: 0.6rem; }
+      td { padding: 8px 10px; font-size: 0.65rem; }
+    }
   </style>
 </head>
 <body>
@@ -262,13 +328,14 @@ $stock_info = $pdo->query("
       <div class="card-title"><i class="fas fa-stethoscope"></i> Top praticiens</div>
       <table>
         <thead>
-          <tr><th>Praticien</th><th style="text-align:center;">Cmd</th><th style="text-align:right;">CA (DT)</th></tr>
+          <tr><th>Praticien</th><th style="text-align:center;">Cmd</th><th style="text-align:center;">Sprays Livrés</th><th style="text-align:right;">CA (DT)</th></tr>
         </thead>
         <tbody>
           <?php foreach ($top_praticiens as $p): ?>
             <tr>
               <td><?= htmlspecialchars($p['praticien']) ?></td>
               <td style="text-align:center;" class="td-num"><?= (int)$p['nb_commandes'] ?></td>
+              <td style="text-align:center;" class="td-num"><?= (int)$p['nb_sprays'] ?></td>
               <td style="text-align:right;" class="td-ca"><?= number_format($p['ca'], 2) ?> DT</td>
             </tr>
           <?php endforeach; ?>

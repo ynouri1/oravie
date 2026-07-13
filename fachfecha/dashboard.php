@@ -118,11 +118,11 @@ $commandes = $stmt->fetchAll();
 
     /* Table */
     .card { background:#fff; border-radius:1.2rem; box-shadow:0 2px 10px rgba(0,0,0,0.05); overflow:hidden; }
-    table { width:100%; border-collapse:collapse; }
+    table { width:100%; border-collapse:collapse; display:block; overflow-x:auto; }
     thead th { background:#F4F7F1; padding:12px 16px; text-align:left; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#7D8F76; }
-    tbody tr { border-top:1px solid #F0F4EC; transition:background 0.15s; }
+    tbody tr { border-top:1px solid #F0F4EC; transition:background 0.15s; display:table-row; width:100%; }
     tbody tr:hover { background:#FAFCF8; }
-    td { padding:12px 16px; font-size:0.88rem; vertical-align:middle; }
+    td { padding:12px 16px; font-size:0.88rem; vertical-align:middle; display:table-cell; }
     .td-num { font-weight:700; color:#4A735C; font-size:0.95rem; }
     .td-client strong { display:block; }
     .td-client small { color:#92A389; font-size:0.78rem; }
@@ -132,6 +132,86 @@ $commandes = $stmt->fetchAll();
     .btn-view:hover { background:#DCE9D4; }
     .empty { text-align:center; padding:3rem; color:#92A389; }
     .empty i { font-size:2rem; display:block; margin-bottom:0.5rem; }
+
+    /* ===== RESPONSIVE MOBILE ===== */
+    @media (max-width: 768px) {
+      body { padding: 0; }
+      nav { padding: 0 1rem; flex-wrap: wrap; height: auto; }
+      .nav-brand { flex: 1; min-width: 200px; padding: 0.75rem 0; }
+      .nav-links { 
+        width: 100%; 
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+      }
+      .nav-links a { 
+        flex: 1;
+        min-width: 120px;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        text-align: center;
+      }
+
+      .main { max-width: 100%; padding: 1.5rem 1rem; }
+      .page-title { font-size: 1.2rem; margin-bottom: 1rem; }
+
+      /* Stats */
+      .stats { gap: 0.75rem; margin-bottom: 1.5rem; }
+      .stat-card { 
+        min-width: calc(50% - 0.375rem);
+        padding: 1rem;
+      }
+      .stat-val { font-size: 1.5rem; }
+      .stat-label { font-size: 0.65rem; margin-top: 0.3rem; }
+
+      /* Filters */
+      .filters { 
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+      }
+      .filters-label { font-size: 0.75rem; }
+      .filter-btn { 
+        padding: 5px 10px;
+        font-size: 0.7rem;
+      }
+
+      /* Table - keep single line with horizontal scroll */
+      table { font-size: 0.8rem; }
+      thead th { padding: 10px 12px; font-size: 0.65rem; }
+      td { padding: 10px 12px; font-size: 0.75rem; }
+      
+      .td-produits { max-width: 150px; }
+      .btn-view { padding: 5px 10px; font-size: 0.75rem; }
+
+      #refresh-bar {
+        font-size: 0.7rem;
+        padding: 0.4rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      nav { padding: 0 0.75rem; }
+      .main { padding: 1rem 0.75rem; }
+      
+      .page-title { font-size: 1rem; }
+
+      .stat-card { 
+        min-width: 100%;
+        padding: 0.8rem;
+      }
+      .stat-val { font-size: 1.3rem; }
+
+      .filter-btn { 
+        padding: 4px 8px;
+        font-size: 0.65rem;
+      }
+
+      table { font-size: 0.7rem; }
+      thead th { padding: 8px 10px; font-size: 0.6rem; }
+      td { padding: 8px 10px; font-size: 0.7rem; }
+      .td-produits { max-width: 120px; }
+      .btn-view { padding: 4px 8px; font-size: 0.7rem; }
+    }
   </style>
 </head>
 <body>

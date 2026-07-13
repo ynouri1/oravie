@@ -215,6 +215,36 @@ $lotColors = ['#2F4B3C','#C6A43F','#3B82F6','#8B5CF6','#F97316','#EF4444','#10B9
 
     .empty { text-align:center; padding:2.5rem; color:#92A389; font-size:0.9rem; }
     .section-title { font-size:1rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+
+    @media (max-width: 768px) {
+      body { padding: 0; }
+      nav { padding: 0 1rem; flex-wrap: wrap; height: auto; }
+      .nav-brand { flex: 1; min-width: 200px; padding: 0.75rem 0; }
+      .nav-links { width: 100%; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }
+      .nav-links a { flex: 1; min-width: 100px; padding: 0.5rem; font-size: 0.7rem; text-align: center; }
+      .main { max-width: 100%; padding: 1.5rem 1rem; }
+      .page-title { font-size: 1.2rem; margin-bottom: 1rem; }
+      .section-title { font-size: 0.95rem; margin-bottom: 0.75rem; }
+      
+      /* Table - keep single line with horizontal scroll */
+      table { display: block; overflow-x: auto; }
+      thead { display: table-header-group; }
+      thead th { padding: 10px 12px; font-size: 0.65rem; }
+      tbody { display: table-row-group; }
+      tbody tr { display: table-row; width: 100%; }
+      td { padding: 10px 12px; font-size: 0.75rem; display: table-cell; }
+      .notes-cell { max-width: 150px; }
+    }
+    @media (max-width: 480px) {
+      nav { padding: 0 0.75rem; }
+      .main { padding: 1rem 0.75rem; }
+      .page-title { font-size: 1rem; }
+      
+      table { font-size: 0.7rem; }
+      thead th { padding: 8px 10px; font-size: 0.6rem; }
+      td { padding: 8px 10px; font-size: 0.65rem; }
+      .notes-cell { max-width: 120px; }
+    }
   </style>
 </head>
 <body>

@@ -329,6 +329,41 @@ foreach ($pdo->query("
     details summary { cursor:pointer; font-size:0.8rem; color:#7D8F76; font-weight:600; user-select:none; padding:6px 0; }
     details summary:hover { color:#2F4B3C; }
     details .form-group { margin-top:8px; }
+
+    @media (max-width: 768px) {
+      body { padding: 0; }
+      nav { padding: 0 1rem; flex-wrap: wrap; height: auto; }
+      .nav-brand { flex: 1; min-width: 200px; padding: 0.75rem 0; }
+      .nav-links { width: 100%; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }
+      .nav-links a { flex: 1; min-width: 100px; padding: 0.5rem; font-size: 0.7rem; text-align: center; }
+      .main { max-width: 100%; padding: 1.5rem 1rem; }
+      .page-title { font-size: 1.2rem; margin-bottom: 1rem; }
+      .stats { gap: 0.75rem; }
+      .stat-card { min-width: calc(50% - 0.375rem); padding: 1rem; }
+      .stat-val { font-size: 1.5rem; }
+      .form-row { flex-direction: column; gap: 0.75rem; }
+      .form-row > div { width: 100%; }
+      input[type="text"], input[type="date"], input[type="number"], select { width: 100%; padding: 10px 12px; font-size: 0.85rem; }
+      button[type="submit"] { width: 100%; padding: 0.75rem; }
+      
+      /* Table - keep single line with horizontal scroll */
+      table { display: block; overflow-x: auto; }
+      thead { display: table-header-group; }
+      thead th { padding: 10px 12px; font-size: 0.65rem; }
+      tbody { display: table-row-group; }
+      tbody tr { display: table-row; width: 100%; }
+      td { padding: 10px 12px; font-size: 0.75rem; display: table-cell; }
+    }
+    @media (max-width: 480px) {
+      nav { padding: 0 0.75rem; }
+      .main { padding: 1rem 0.75rem; }
+      .page-title { font-size: 1rem; }
+      .stat-card { min-width: 100%; }
+      
+      table { font-size: 0.7rem; }
+      thead th { padding: 8px 10px; font-size: 0.6rem; }
+      td { padding: 8px 10px; font-size: 0.65rem; }
+    }
   </style>
 </head>
 <body>

@@ -9,27 +9,85 @@
  * CRON Job sur Linux/OVH :
  * crontab -e
  * Puis ajouter la ligne :
- * 0 9 * * 0 /usr/bin/php /var/www/oravie/rapport_hebdo.php > /var/log/oravie-rapport.log 2>&1
+ * 0 9 * * 0 /usr/bin/php /var/www/oravie/rapport_hebdo.php >> /var/www/oravie/logs/rapport.log 2>&1
  * 
  * Cela exécutera le script chaque dimanche à 9h du matin
+ * Les logs seront dans /var/www/oravie/logs/rapport.log
  */
 
-$env = parse_ini_file(__DIR__ . '/envprod');
-$config = require __DIR__ . '/config_rapport.php';
+// === SETUP LOGGING ===
+$script_dir = __DIR__;
+$logs_dir = $script_dir . '/logs';
+if (!is_dir($logs_dir)) {
+    mkdir($logs_dir, 0755, true);
+}
+$log_file = $logs_dir . '/rapport.log';
+
+function write_log($message) {
+    global $log_file;
+    $timestamp = date('Y-m-d H:i:s');
+    $output = "[$timestamp] $message\n";
+    file_put_contents($log_file, $output, FILE_APPEND);
+    echo $output;
+}
+
+write_log('=== RAPPORT HEBDOMADAIRE LANCÉ ===');
+write_log('Mode: ' . (php_sapi_name() === 'cli' ? 'CLI/CRON' : 'NAVIGATEUR'));
+
+// === VÉRIFICATIONS PRÉALABLES ===
+write_log('Vérification des fichiers...');
+
+if (!file_exists($script_dir . '/envprod')) {
+    write_log('❌ ERREUR: Fichier envprod introuvable à ' . $script_dir . '/envprod');
+    exit(1);
+}
+write_log('✅ envprod trouvé');
+
+if (!file_exists($script_dir . '/config_rapport.php')) {
+    write_log('❌ ERREUR: Fichier config_rapport.php introuvable');
+    exit(1);
+}
+write_log('✅ config_rapport.php trouvé');
+
+// Imports PHPMailer
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+$phpmailer_dir = $script_dir . '/vendor/phpmailer';
+if (!file_exists($phpmailer_dir . '/Exception.php')) {
+    write_log('❌ ERREUR: PHPMailer non trouvé à ' . $phpmailer_dir);
+    exit(1);
+}
+write_log('✅ PHPMailer trouvé');
+
+require $phpmailer_dir . '/Exception.php';
+require $phpmailer_dir . '/PHPMailer.php';
+require $phpmailer_dir . '/SMTP.php';
+
+write_log('Chargement de la configuration...');
+$env = parse_ini_file($script_dir . '/envprod');
+$config = require $script_dir . '/config_rapport.php';
 
 if (!$env) {
-    die('❌ Erreur : fichier envprod introuvable.');
+    write_log('❌ ERREUR: Impossible de charger envprod');
+    exit(1);
 }
+write_log('✅ envprod chargé');
 
 if (!$config || !$config['email_to']) {
-    die('❌ Erreur : config_rapport.php introuvable ou email_to vide. Veuillez éditer config_rapport.php');
+    write_log('❌ ERREUR: config_rapport.php introuvable ou email_to vide');
+    exit(1);
 }
+write_log('✅ Configuration valide - Email destinataire: ' . $config['email_to']);
 
 try {
+    write_log('Connexion à la base de données...');
     $dsn = 'mysql:host=' . $env['DB_HOST'] . ';dbname=' . $env['DB_NAME'] . ';charset=utf8mb4';
     $pdo = new PDO($dsn, $env['DB_USER'], $env['DB_PASS'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     ]);
+    write_log('✅ Connexion BD réussie');
+
 
     // Dates de la semaine précédente
     $today = new DateTime();
@@ -207,25 +265,69 @@ try {
     </body>
     </html>";
 
-    // Email (utilise la config)
+    // Email avec PHPMailer (via SMTP OVH)
     $to = $config['email_to'];
     $subject = '📊 Rapport Hebdomadaire ORAVIE — ' . $semaine;
     
-    $headers = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-type: text/html; charset=utf-8\r\n";
-    $headers .= "From: noreply@oravie.tn\r\n";
-
-    if (mail($to, $subject, $email_html, $headers)) {
-        echo "✅ Rapport envoyé avec succès à $to\n";
-        echo "📊 Statistiques semaine $semaine :\n";
-        echo "   • Commandes : " . ($stats_data['total_cmd'] ?? 0) . "\n";
-        echo "   • Livrées : " . ($stats_data['cmd_livrees'] ?? 0) . "\n";
-        echo "   • Sprays : $sprays_livres\n";
-        echo "   • CA : " . number_format((float)($stats_data['ca'] ?? 0), 2) . " DT\n";
-    } else {
-        echo "❌ Erreur lors de l'envoi du mail à $to\n";
+    write_log('Préparation de l\'email...');
+    write_log('Destinataire: ' . $to);
+    write_log('Sujet: ' . $subject);
+    
+    try {
+        write_log('Configuration SMTP...');
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host       = $env['MAIL_HOST'];
+        $mail->SMTPAuth   = true;
+        $mail->Username   = $env['MAIL_USER'];
+        $mail->Password   = $env['MAIL_PASS'];
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = $env['MAIL_PORT'];
+        $mail->CharSet    = 'UTF-8';
+        write_log('✅ SMTP configuré: ' . $env['MAIL_HOST'] . ':' . $env['MAIL_PORT']);
+        
+        write_log('Configuration expéditeur...');
+        $mail->setFrom($env['MAIL_FROM'], 'ORAVIE Rapport');
+        $mail->addAddress($to);
+        if (!empty($env['MAIL_CC'])) {
+            $mail->addCC($env['MAIL_CC']);
+            write_log('CC: ' . $env['MAIL_CC']);
+        }
+        
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $email_html;
+        
+        write_log('Envoi du mail...');
+        $mail->send();
+        write_log('✅ EMAIL ENVOYÉ AVEC SUCCÈS');
+        write_log("📧 Destinataire: $to");
+        write_log("📊 Statistiques semaine $semaine :");
+        write_log("   • Commandes: " . ($stats_data['total_cmd'] ?? 0));
+        write_log("   • Livrées: " . ($stats_data['cmd_livrees'] ?? 0));
+        write_log("   • Sprays: $sprays_livres");
+        write_log("   • CA: " . number_format((float)($stats_data['ca'] ?? 0), 2) . " DT");
+        write_log('=== FIN DU RAPPORT ===');
+        
+        if (php_sapi_name() === 'cli') {
+            echo "\n✅ Rapport envoyé avec succès à $to\n";
+            echo "📊 Statistiques semaine $semaine :\n";
+            echo "   • Commandes : " . ($stats_data['total_cmd'] ?? 0) . "\n";
+            echo "   • Livrées : " . ($stats_data['cmd_livrees'] ?? 0) . "\n";
+            echo "   • Sprays : $sprays_livres\n";
+            echo "   • CA : " . number_format((float)($stats_data['ca'] ?? 0), 2) . " DT\n";
+            echo "\n📝 Logs: $log_file\n";
+        }
+    } catch (Exception $e) {
+        write_log('❌ ERREUR MAIL: ' . $e->getMessage());
+        write_log('Stack: ' . $e->getTraceAsString());
+        echo "❌ Erreur lors de l'envoi du mail : " . $e->getMessage() . "\n";
+        exit(1);
     }
 
 } catch (Exception $e) {
-    echo "❌ Erreur : " . $e->getMessage();
+    write_log('❌ ERREUR BD/GÉNÉRAL: ' . $e->getMessage());
+    write_log('Stack: ' . $e->getTraceAsString());
+    echo "❌ Erreur (base de données ou autre) : " . $e->getMessage();
+    exit(1);
 }

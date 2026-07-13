@@ -99,29 +99,56 @@
       color: #A0B298;
     }
 
-    .social-links {
-      display: flex;
-      gap: 1rem;
-    }
-
-    .social-link {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #F0F4EB;
+    .phone-link {
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: #F0F4EB;
+      border-radius: 50px;
       color: #4A735C;
-      font-size: 1.2rem;
-      transition: all 0.3s ease;
+      font-weight: 600;
       text-decoration: none;
+      transition: all 0.3s ease;
+      font-size: 1rem;
     }
 
-    .social-link:hover {
+    .phone-link:hover {
       background: #C6A43F;
       color: white;
-      transform: translateY(-3px);
+    }
+
+    .phone-link i {
+      font-size: 1.2rem;
+    }
+
+    .email-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: #F0F4EB;
+      border-radius: 50px;
+      color: #4A735C;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+
+    .email-link:hover {
+      background: #C6A43F;
+      color: white;
+    }
+
+    .email-link i {
+      font-size: 1.2rem;
+    }
+
+    .contact-links {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
     }
 
     /* Hero Section */
@@ -536,6 +563,9 @@
       .container { padding: 1rem; }
       .testimonials-grid { flex-direction: column; align-items: center; }
       .partners-grid { gap: 1.5rem; }
+      .header { flex-direction: column; gap: 1rem; }
+      .contact-links { width: 100%; flex-direction: column; }
+      .phone-link, .email-link { width: 100%; justify-content: center; }
     }
 
     /* ── SPLASH SCREEN ─────────────────────────────────────── */
@@ -658,9 +688,13 @@
           <div class="logo-tag">— PURETÉ PROFESSIONNELLE —</div>
         </div>
       </a>
-      <div class="social-links">
-        <a href="https://facebook.com" target="_blank" class="social-link"><i class="fab fa-facebook-f"></i></a>
-        <a href="https://instagram.com" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+      <div class="contact-links">
+        <a href="tel:+21626063086" class="phone-link" title="Appeler">
+          <i class="fas fa-phone"></i> 26 063 086
+        </a>
+        <a href="mailto:contact@oravie.tn" class="email-link" title="Envoyer un email">
+          <i class="fas fa-envelope"></i> contact@oravie.tn
+        </a>
       </div>
     </div>
 
@@ -786,6 +820,7 @@
       </div>
       <p>© 2025 ORAVIE — Pureté Professionnelle</p>
       <p style="margin-top: 0.5rem;">🌿 100% naturel • Sans alcool • Fabriqué en Tunisie</p>
+      <p style="margin-top: 1rem;"><i class="fas fa-phone"></i> Contactez-nous au <strong>26 063 086</strong></p>
     </div>
   </div>
 

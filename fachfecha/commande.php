@@ -112,8 +112,8 @@ $lignes = $d['lignes'] ?? [];
     .back-link { color:#4A735C; text-decoration:none; font-size:0.85rem; display:flex; align-items:center; gap:5px; padding:6px 12px; background:#fff; border-radius:0.8rem; }
     .back-link:hover { background:#EFF3EA; }
 
-    .grid2 { display:flex; gap:1.5rem; flex-wrap:wrap; }
-    .col { flex:1; min-width:260px; display:flex; flex-direction:column; gap:1.5rem; }
+    .grid2 { display:flex; gap:1.5rem; flex-wrap:nowrap; overflow-x:auto; padding-bottom:0.5rem; }
+    .col { flex:1; min-width:350px; display:flex; flex-direction:column; gap:1.5rem; }
 
     .card { background:#fff; border-radius:1.2rem; padding:1.5rem; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
     .card-title { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#7D8F76; margin-bottom:1.2rem; display:flex; align-items:center; gap:8px; }
@@ -135,6 +135,56 @@ $lignes = $d['lignes'] ?? [];
     .btn-save:hover { background:#4A735C; }
 
     .success { background:#D1FAE5; color:#065F46; border:1px solid #A7F3D0; border-radius:0.8rem; padding:10px 14px; font-size:0.85rem; margin-bottom:1.5rem; }
+
+    /* ===== RESPONSIVE MOBILE ===== */
+    @media (max-width: 768px) {
+      body { padding: 1rem 0.75rem; }
+      nav { padding: 0 1rem; flex-wrap: wrap; height: auto; }
+      .nav-brand { flex: 1; min-width: 200px; padding: 0.75rem 0; }
+      .nav-links { width: 100%; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+      .nav-links a { width: 100%; padding: 0.75rem 1rem; text-align: left; border-radius: 0; }
+      .nav-links a.logout { color: #F87171; }
+
+      .main { max-width: 100%; padding: 1rem 0.75rem; }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 1.5rem; }
+      .page-header h1 { font-size: 1.1rem; width: 100%; }
+      .back-link { width: 100%; justify-content: flex-start; }
+
+      .grid2 { flex-direction: column; gap: 1rem; }
+      .col { min-width: 100%; }
+
+      .card { padding: 1rem; border-radius: 1rem; }
+      .card-title { font-size: 0.7rem; margin-bottom: 1rem; }
+
+      .info-row { flex-direction: column; gap: 0.25rem; padding: 0.75rem 0; }
+      .info-label { text-align: left; }
+      .info-val { text-align: left; }
+
+      table { font-size: 0.8rem; }
+      thead th { font-size: 0.65rem; padding: 0.5rem 0; }
+      tbody td { padding: 0.75rem 0; font-size: 0.8rem; }
+      .total-row td { font-size: 0.95rem; padding-top: 1rem; }
+
+      .status-form { flex-direction: column; }
+      .status-form select { width: 100%; }
+      .btn-save { width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 0.75rem 0.5rem; }
+      nav { padding: 0 0.75rem; }
+      .main { padding: 0.75rem 0.5rem; }
+      
+      .page-header h1 { font-size: 1rem; }
+      .card { padding: 0.75rem; }
+      
+      table { font-size: 0.75rem; }
+      thead th { font-size: 0.6rem; }
+      tbody td { padding: 0.5rem 0; }
+      
+      .status-form select { font-size: 0.85rem; padding: 0.75rem; }
+      .btn-save { padding: 0.75rem 1rem; font-size: 0.85rem; }
+    }
   </style>
 </head>
 <body>

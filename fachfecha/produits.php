@@ -82,6 +82,48 @@ $msgType  = $_GET['t'] ?? 'success';
 
     .btn-save { background:#2F4B3C; color:#fff; border:none; border-radius:0.8rem; padding:10px 22px; font-size:0.9rem; font-weight:700; cursor:pointer; transition:0.2s; align-self:flex-end; white-space:nowrap; }
     .btn-save:hover { background:#4A735C; }
+
+    /* ===== RESPONSIVE MOBILE ===== */
+    @media (max-width: 768px) {
+      body { padding: 0; }
+      nav { padding: 0 1rem; flex-wrap: wrap; height: auto; }
+      .nav-brand { flex: 1; min-width: 200px; padding: 0.75rem 0; }
+      .nav-links { 
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+      }
+      .nav-links a { 
+        flex: 1;
+        min-width: 100px;
+        padding: 0.5rem;
+        font-size: 0.7rem;
+        text-align: center;
+        border-radius: 0;
+      }
+      .main { max-width: 100%; padding: 1.5rem 1rem; }
+      .page-title { font-size: 1.2rem; margin-bottom: 1rem; }
+      
+      .product-card { padding: 1.2rem; margin-bottom: 1rem; }
+      .prod-header { flex-wrap: wrap; gap: 0.75rem; }
+      .prod-name { flex: 1; min-width: 100%; }
+      .prod-status-badge { margin-left: 0; }
+      
+      .edit-row { flex-direction: column; gap: 1rem; align-items: stretch; }
+      .edit-group { align-items: stretch; }
+      .edit-group input[type=number] { width: 100%; }
+      
+      .toggle-wrap { margin: 1rem 0; }
+      .btn-save { width: 100%; align-self: stretch; }
+    }
+
+    @media (max-width: 480px) {
+      nav { padding: 0 0.75rem; }
+      .main { padding: 1rem 0.75rem; }
+      .page-title { font-size: 1rem; }
+      .product-card { padding: 1rem; }
+    }
   </style>
 </head>
 <body>

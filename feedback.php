@@ -25,13 +25,16 @@ try {
     $commande = null;
 
     if ($cmd_id && $token) {
-        // Charger la commande
-        $stmt = $pdo->prepare("SELECT id, donnees, date_commande FROM commandes WHERE id = :id");
+        // Charger la commande et vérifier le token de feedback
+        $stmt = $pdo->prepare("SELECT id, donnees, date_commande, feedback_token FROM commandes WHERE id = :id");
         $stmt->execute([':id' => $cmd_id]);
         $commande = $stmt->fetch();
 
-        if (!$commande) {
-            $error = 'Commande introuvable.';
+        // Le token doit correspondre exactement à celui enregistré lors de l'envoi de l'email.
+        // Échec fermé : on ne divulgue aucune donnée de la commande si le token est invalide.
+        if (!$commande || empty($commande['feedback_token']) || !hash_equals((string) $commande['feedback_token'], (string) $token)) {
+            $commande = null;
+            $error = 'Lien invalide ou expiré.';
         }
     } else {
         $error = 'Paramètres manquants ou invalides.';
@@ -107,7 +110,8 @@ try {
     }
 
 } catch (PDOException $e) {
-    $error = 'Erreur base de données : ' . $e->getMessage();
+    error_log('feedback.php DB error: ' . $e->getMessage());
+    $error = 'Service momentanément indisponible. Veuillez réessayer plus tard.';
 }
 ?><!DOCTYPE html>
 <html lang="fr">

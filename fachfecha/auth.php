@@ -1,7 +1,45 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    // Durcissement du cookie de session
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'httponly' => true,
+        'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
 
 define('SESSION_TIMEOUT', 1800); // 30 min
+
+/**
+ * Retourne (et génère au besoin) le jeton CSRF de la session.
+ */
+function csrfToken(): string {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Champ caché à insérer dans chaque formulaire POST de l'admin.
+ */
+function csrfField(): string {
+    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(csrfToken()) . '">';
+}
+
+/**
+ * Vérifie le jeton CSRF d'une requête POST. Interrompt l'exécution si invalide.
+ */
+function csrfCheck(): void {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!is_string($token) || $token === '' || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+        http_response_code(419);
+        die('Session de sécurité expirée ou invalide. Revenez en arrière, rechargez la page et réessayez.');
+    }
+}
 
 function getDB(): PDO {
     static $pdo = null;

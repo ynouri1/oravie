@@ -65,6 +65,7 @@ $msg = '';
 
 // ── AJOUTER UN LOT ───────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_lot') {
+    csrfCheck();
     $num   = filter_var($_POST['lot_numero'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
     $nom   = trim(strip_tags($_POST['lot_nom'] ?? ''));
     $debut = $_POST['lot_date_debut'] ?? '';
@@ -78,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_l
 
 // ── SUPPRIMER ────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    csrfCheck();
     $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
     if ($id) {
         // Annuler le stock produit avant suppression
@@ -97,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 
 // ── AJOUTER / MODIFIER ───────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['add', 'edit'])) {
+    csrfCheck();
     $id          = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
     $date        = $_POST['date_depense'] ?? '';
     $categorie   = in_array($_POST['categorie'] ?? '', $categories) ? $_POST['categorie'] : '';
@@ -505,6 +508,7 @@ foreach ($pdo->query("
                 <div class="td-actions">
                   <a href="depenses.php?edit=<?= $d['id'] ?>&mois=<?= urlencode($filterMois) ?>&cat=<?= urlencode($filterCat) ?>&lot=<?= urlencode($filterLot) ?>" class="btn btn-secondary btn-sm"><i class="fas fa-pen"></i></a>
                   <form method="post" onsubmit="return confirm('Supprimer cette dépense ?');" style="display:inline;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?= $d['id'] ?>">
                     <input type="hidden" name="mois" value="<?= htmlspecialchars($filterMois) ?>">
@@ -555,6 +559,7 @@ foreach ($pdo->query("
         </div>
         <div class="card-body">
           <form method="post">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="<?= $editDep ? 'edit' : 'add' ?>">
             <?php if ($editDep): ?><input type="hidden" name="id" value="<?= $editDep['id'] ?>"><?php endif; ?>
             <input type="hidden" name="mois" value="<?= htmlspecialchars($filterMois) ?>">
@@ -663,6 +668,7 @@ foreach ($pdo->query("
           <details style="margin-top:12px;">
             <summary>+ Ajouter un lot</summary>
             <form method="post" style="margin-top:10px;">
+              <?= csrfField() ?>
               <input type="hidden" name="action" value="add_lot">
               <div class="form-group">
                 <label>Numéro du lot *</label>

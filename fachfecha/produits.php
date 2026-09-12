@@ -14,6 +14,7 @@ try {
 } catch (Exception $e) {}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'])) {
+    csrfCheck();
     $pid = filter_var($_POST['id'], FILTER_VALIDATE_INT);
     if ($pid && $_POST['action'] === 'update') {
         $prix  = filter_var($_POST['prix']  ?? '', FILTER_VALIDATE_FLOAT);
@@ -173,6 +174,7 @@ $msgType  = $_GET['t'] ?? 'success';
       <span class="prod-status-badge <?= $p['actif'] ? 'active' : 'inactive' ?>"><?= $p['actif'] ? 'Actif' : 'Inactif' ?></span>
     </div>
     <form method="POST">
+      <?= csrfField() ?>
       <input type="hidden" name="action" value="update">
       <input type="hidden" name="id" value="<?= $p['id'] ?>">
       <div class="edit-row">

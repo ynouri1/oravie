@@ -6,6 +6,7 @@ $pdo = getDB();
 
 // Handle quick status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'], $_POST['statut'])) {
+    csrfCheck();
     $validStatuts = ['nouvelle', 'confirmée', 'expédiée', 'livrée', 'annulée'];
     $id = filter_var($_POST['id'], FILTER_VALIDATE_INT);
     if ($id && in_array($_POST['statut'], $validStatuts)) {

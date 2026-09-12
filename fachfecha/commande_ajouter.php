@@ -37,6 +37,7 @@ $validStatuts = ['nouvelle', 'confirmée', 'expédiée', 'livrée'];
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfCheck();
     $praticien_id = filter_var($_POST['praticien_id'] ?? '', FILTER_VALIDATE_INT);
     $lot_id       = filter_var($_POST['lot_id'] ?? '', FILTER_VALIDATE_INT) ?: null;
     $statut       = in_array($_POST['statut'] ?? '', $validStatuts) ? $_POST['statut'] : 'confirmée';
@@ -222,6 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <?php endif; ?>
 
   <form method="POST" id="formCommande">
+    <?= csrfField() ?>
     <div class="card">
       <div class="card-header"><i class="fas fa-stethoscope"></i> Praticien &amp; suivi</div>
       <div class="card-body">

@@ -62,6 +62,7 @@ if ($tableExists) {
 
     // Traitement des actions POST
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        csrfCheck();
         $action = $_POST['action'] ?? '';
 
         // Ajouter/Modifier un praticien
@@ -601,6 +602,7 @@ if ($tableExists) {
       </h2>
 
       <form id="pracForm" method="POST">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="save">
         <input type="hidden" name="id" id="pracId" value="<?= $praticien_edit['id'] ?? 0 ?>">
 
@@ -838,6 +840,7 @@ document.getElementById('confirmBtn').addEventListener('click', function() {
     const form = document.createElement('form');
     form.method = 'POST';
     form.innerHTML = `
+      <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
       <input type="hidden" name="action" value="delete">
       <input type="hidden" name="id" value="${deleteId}">
     `;

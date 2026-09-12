@@ -9,16 +9,16 @@ requireAuth();
 
 $pdo = getDB();
 
+// Migrations défensives : colonnes nécessaires au suivi des emails de feedback
+try { $pdo->exec("ALTER TABLE commandes ADD COLUMN feedback_email_sent_at DATETIME NULL DEFAULT NULL"); } catch (Exception $e) {}
+try { $pdo->exec("ALTER TABLE commandes ADD COLUMN feedback_token VARCHAR(64) NULL DEFAULT NULL"); } catch (Exception $e) {}
+
 // Traiter l'action d'envoi des emails
 $send_message = '';
 $send_error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'send_single_email') {
+    csrfCheck();
     try {
-        // Vérifier le token CSRF
-        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token'] ?? null) {
-            throw new Exception('Token de sécurité invalide');
-        }
-
         $cmd_id = (int)($_POST['cmd_id'] ?? 0);
         if ($cmd_id <= 0) {
             throw new Exception('ID commande invalide');
@@ -143,9 +143,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $mailer->AltBody = "Veuillez consulter ce message en HTML";
 
             if ($mailer->send()) {
-                // Mettre à jour le timestamp d'envoi
-                $upd = $pdo->prepare("UPDATE commandes SET feedback_email_sent_at = NOW() WHERE id = :id");
-                $upd->execute([':id' => $cmd['id']]);
+                // Mettre à jour le timestamp d'envoi + enregistrer le token de feedback
+                $upd = $pdo->prepare("UPDATE commandes SET feedback_email_sent_at = NOW(), feedback_token = :tok WHERE id = :id");
+                $upd->execute([':tok' => $token, ':id' => $cmd['id']]);
                 $send_message = "✅ Email envoyé avec succès à <strong>" . htmlspecialchars($email) . "</strong>";
             } else {
                 $send_error = "❌ Erreur lors de l'envoi : " . $mailer->ErrorInfo;
@@ -156,11 +156,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } catch (Exception $e) {
         $send_error = "❌ Erreur : " . htmlspecialchars($e->getMessage());
     }
-}
-
-// Générer CSRF token
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 // Filtres
@@ -412,7 +407,7 @@ $stats = $pdo->query("
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="action" value="send_single_email">
                                         <input type="hidden" name="cmd_id" value="<?= $cmd['id'] ?>">
-                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                        <?= csrfField() ?>
                                         <button type="submit" style="background:#10B981; color:white; border:none; padding:6px 12px; border-radius:0.4rem; cursor:pointer; font-size:0.85rem; font-weight:600;" onclick="return confirm('Envoyer un email à <?= htmlspecialchars($email) ?> ?')">
                                             <i class="fas fa-paper-plane"></i> Envoyer
                                         </button>

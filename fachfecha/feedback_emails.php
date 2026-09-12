@@ -9,6 +9,164 @@ requireAuth();
 
 $pdo = getDB();
 
+// Traiter l'action d'envoi des emails
+$send_message = '';
+$send_error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'send_emails') {
+    try {
+        // Vérifier le token CSRF
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token'] ?? null) {
+            throw new Exception('Token de sécurité invalide');
+        }
+
+        // Charger PHPMailer
+        if (!file_exists('../vendor/phpmailer/PHPMailer.php')) {
+            throw new Exception('PHPMailer non trouvé');
+        }
+        require_once '../vendor/phpmailer/PHPMailer.php';
+        require_once '../vendor/phpmailer/SMTP.php';
+        require_once '../vendor/phpmailer/Exception.php';
+
+        $mailer = new \PHPMailer\PHPMailer\PHPMailer(true);
+
+        // Récupérer les commandes en attente d'envoi
+        $stmt = $pdo->query("
+            SELECT 
+                c.id,
+                c.donnees,
+                c.date_commande
+            FROM commandes c
+            WHERE c.statut = 'livrée' 
+            AND c.feedback_email_sent_at IS NULL 
+            AND c.date_commande <= DATE_SUB(NOW(), INTERVAL 2 WEEK)
+            ORDER BY c.date_commande ASC
+            LIMIT 50
+        ");
+        $pending = $stmt->fetchAll();
+
+        if (empty($pending)) {
+            $send_message = 'Aucun email en attente d\'envoi.';
+        } else {
+            // Charger config SMTP depuis envprod
+            $env_config = parse_ini_file('../envprod');
+            if (!$env_config || !isset($env_config['SMTP_HOST'])) {
+                throw new Exception('Configuration SMTP non trouvée dans envprod');
+            }
+
+            // Config SMTP
+            $mailer->isSMTP();
+            $mailer->Host = $env_config['SMTP_HOST'];
+            $mailer->SMTPAuth = true;
+            $mailer->Username = $env_config['SMTP_USER'];
+            $mailer->Password = $env_config['SMTP_PASS'];
+            $mailer->SMTPSecure = 'ssl';
+            $mailer->Port = (int)$env_config['SMTP_PORT'];
+            $mailer->SetFrom($env_config['SMTP_FROM'], 'ORAVIE');
+            $mailer->isHTML(true);
+
+            $sent_count = 0;
+            $failed = [];
+
+            foreach ($pending as $cmd) {
+                try {
+                    $donnees = json_decode($cmd['donnees'], true);
+                    $nom_client = trim(($donnees['prenom'] ?? '') . ' ' . ($donnees['nom'] ?? ''));
+                    $email = $donnees['email'] ?? '';
+
+                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $failed[] = "Cmd #{$cmd['id']}: email invalide";
+                        continue;
+                    }
+
+                    // Générer un token unique pour ce client
+                    $token = bin2hex(random_bytes(16));
+                    $feedback_url = "https://oravie.tn/feedback.php?id={$cmd['id']}&token={$token}";
+
+                    // Email HTML
+                    $html = "
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset='UTF-8'>
+                        <style>
+                            body { font-family: Arial, sans-serif; background: #f4f7f1; margin: 0; padding: 0; }
+                            .email-wrapper { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                            .header { background: #2F4B3C; color: #ffffff; padding: 30px; text-align: center; }
+                            .header h1 { margin: 0; font-size: 24px; }
+                            .content { padding: 30px; }
+                            .content p { margin: 0 0 15px 0; line-height: 1.6; color: #333; }
+                            .section { margin: 25px 0; padding: 20px; background: #f9faf8; border-left: 4px solid #4A735C; }
+                            .section h3 { margin: 0 0 10px 0; color: #2F4B3C; }
+                            .cta-button { display: inline-block; background: #4A735C; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+                            .cta-button:hover { background: #2F4B3C; }
+                            .footer { background: #f4f7f1; padding: 20px; text-align: center; font-size: 12px; color: #7D8F76; }
+                            .link-text { color: #4A735C; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class='email-wrapper'>
+                            <div class='header'>
+                                <h1>🌿 Votre avis nous intéresse !</h1>
+                            </div>
+                            <div class='content'>
+                                <p>Bonjour <strong>{$nom_client}</strong>,</p>
+                                <p>Nous espérons que votre récente commande ORAVIE vous a satisfait(e) ! Pour nous aider à améliorer nos services, nous aimerions connaître votre avis sur :</p>
+                                <div class='section'>
+                                    <h3>✨ Votre retour concerne :</h3>
+                                    <ul>
+                                        <li>La qualité du produit</li>
+                                        <li>La qualité de la livraison</li>
+                                        <li>Votre expérience sur notre site</li>
+                                        <li>Vos remarques et suggestions</li>
+                                    </ul>
+                                </div>
+                                <p style='text-align: center;'>
+                                    <a href='{$feedback_url}' class='cta-button'>Partager mon avis (2 min)</a>
+                                </p>
+                                <p>Ou cliquez sur ce lien : <span class='link-text'><a href='{$feedback_url}'>{$feedback_url}</a></span></p>
+                                <p style='margin-top: 30px; color: #7D8F76; font-size: 12px;'>Merci de votre confiance ! 🙏</p>
+                            </div>
+                            <div class='footer'>
+                                <p>© 2026 ORAVIE - Tous droits réservés</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>";
+
+                    $mailer->clearAddresses();
+                    $mailer->addAddress($email, $nom_client);
+                    $mailer->Subject = "ORAVIE - Partagez votre avis sur votre commande";
+                    $mailer->Body = $html;
+                    $mailer->AltBody = "Veuillez consulter ce message en HTML";
+
+                    if ($mailer->send()) {
+                        // Mettre à jour le timestamp d'envoi
+                        $upd = $pdo->prepare("UPDATE commandes SET feedback_email_sent_at = NOW() WHERE id = :id");
+                        $upd->execute([':id' => $cmd['id']]);
+                        $sent_count++;
+                    } else {
+                        $failed[] = "Cmd #{$cmd['id']}: erreur d'envoi";
+                    }
+                } catch (Exception $e) {
+                    $failed[] = "Cmd #{$cmd['id']}: " . $e->getMessage();
+                }
+            }
+
+            $send_message = "✅ <strong>$sent_count email(s) envoyé(s) avec succès</strong>";
+            if (!empty($failed)) {
+                $send_error = "⚠️ " . count($failed) . " erreur(s) : " . implode(", ", array_slice($failed, 0, 3));
+            }
+        }
+    } catch (Exception $e) {
+        $send_error = "❌ Erreur : " . htmlspecialchars($e->getMessage());
+    }
+}
+
+// Générer CSRF token
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // Filtres
 $filter_status = $_GET['status'] ?? 'all'; // all, sent, pending
 $filter_month = $_GET['month'] ?? date('Y-m');
@@ -148,6 +306,18 @@ $stats = $pdo->query("
             <h1><i class="fas fa-envelope"></i> Historique Emails Feedback</h1>
         </div>
 
+        <!-- Messages -->
+        <?php if ($send_message): ?>
+            <div style="background:#D1FAE5; border:2px solid #10B981; color:#059669; padding:1rem; border-radius:0.6rem; margin-bottom:1.5rem;">
+                <i class="fas fa-check-circle"></i> <?= $send_message ?>
+            </div>
+        <?php endif; ?>
+        <?php if ($send_error): ?>
+            <div style="background:#FEE2E2; border:2px solid #EF4444; color:#DC2626; padding:1rem; border-radius:0.6rem; margin-bottom:1.5rem;">
+                <i class="fas fa-exclamation-circle"></i> <?= $send_error ?>
+            </div>
+        <?php endif; ?>
+
         <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card green">
@@ -189,6 +359,15 @@ $stats = $pdo->query("
                 </div>
                 <button type="submit" class="btn-filter"><i class="fas fa-search"></i> Filtrer</button>
                 <a href="?" class="btn-filter" style="background:#92A389;"><i class="fas fa-redo"></i> Réinitialiser</a>
+            </form>
+            
+            <!-- Bouton d'envoi -->
+            <form method="POST" style="display:flex; gap:0.5rem; align-items:flex-end;">
+                <input type="hidden" name="action" value="send_emails">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                <button type="submit" class="btn-filter" style="background:#10B981; flex-wrap: nowrap;" onclick="return confirm('Envoyer les emails en attente ? (<?= $stats['en_attente'] ?? 0 ?> email(s))')">
+                    <i class="fas fa-paper-plane"></i> Envoyer les emails (<?= $stats['en_attente'] ?? 0 ?>)
+                </button>
             </form>
         </div>
 

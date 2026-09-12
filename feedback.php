@@ -264,15 +264,180 @@ try {
             gap: 15px;
         }
 
-        @media (max-width: 600px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 768px) {
             .container {
                 padding: 25px;
             }
             .header h1 {
-                font-size: 1.4rem;
+                font-size: 1.3rem;
+            }
+            .header p {
+                font-size: 0.9rem;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .form-group {
+                margin-bottom: 15px;
+            }
+            .form-group label {
+                font-size: 0.9rem;
+                margin-bottom: 8px;
+            }
+            .form-group input[type="text"],
+            .form-group input[type="email"],
+            .form-group textarea,
+            .form-group select {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            .form-group textarea {
+                min-height: 100px;
+            }
+            .rating-labels {
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+            .rating-label {
+                flex: 1;
+                min-width: 65px;
+                padding: 8px 4px;
+                font-size: 0.75rem;
+            }
+            .btn-submit {
+                padding: 14px;
+                font-size: 0.95rem;
+            }
+            .section-title {
+                font-size: 1rem;
+                margin: 20px 0 12px 0;
+            }
+            .info-box {
+                font-size: 0.85rem;
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+            .container {
+                width: 100%;
+                border-radius: 0;
+                padding: 20px;
+                margin: 0;
+                animation: slideIn 0.3s ease-out;
+            }
+            .header {
+                margin-bottom: 18px;
+            }
+            .header h1 {
+                font-size: 1.15rem;
+            }
+            .header p {
+                font-size: 0.8rem;
+            }
+            .form-row {
+                gap: 10px;
+            }
+            .form-group {
+                margin-bottom: 12px;
+            }
+            .form-group label {
+                font-size: 0.8rem;
+                margin-bottom: 6px;
+                font-weight: 600;
+            }
+            .form-group input[type="text"],
+            .form-group input[type="email"],
+            .form-group textarea {
+                padding: 10px 10px;
+                font-size: 16px;
+                border-radius: 5px;
+            }
+            .form-group textarea {
+                min-height: 85px;
+            }
+            .rating-labels {
+                gap: 4px;
+            }
+            .rating-label {
+                min-width: 55px;
+                padding: 6px 3px;
+                font-size: 0.7rem;
+                line-height: 1.2;
+            }
+            .btn-submit {
+                padding: 12px;
+                font-size: 0.9rem;
+                margin-top: 20px;
+            }
+            .section-title {
+                font-size: 0.95rem;
+                margin: 16px 0 10px 0;
+            }
+            .info-box {
+                font-size: 0.8rem;
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+            .required {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            .header h1 {
+                font-size: 1rem;
+            }
+            .header p {
+                font-size: 0.75rem;
+            }
+            .form-group {
+                margin-bottom: 10px;
+            }
+            .form-group label {
+                font-size: 0.75rem;
+                margin-bottom: 5px;
+            }
+            .form-group input[type="text"],
+            .form-group input[type="email"],
+            .form-group textarea {
+                padding: 10px;
+                font-size: 16px;
+            }
+            .form-group textarea {
+                min-height: 75px;
+            }
+            .rating-labels {
+                gap: 2px;
+                justify-content: space-between;
+            }
+            .rating-label {
+                flex: 1;
+                min-width: auto;
+                padding: 3px 2px;
+                font-size: 0.6rem;
+                text-align: center;
+            }
+            .btn-submit {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+            .section-title {
+                font-size: 0.9rem;
+                margin: 14px 0 8px 0;
+            }
+            .info-box {
+                font-size: 0.7rem;
+                padding: 8px;
+                margin-bottom: 10px;
             }
         }
 
@@ -334,6 +499,11 @@ try {
             cursor: pointer;
             transition: 0.2s;
             font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
         }
 
         input[type="radio"]:checked + .rating-label {

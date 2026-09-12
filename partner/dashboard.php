@@ -97,7 +97,7 @@ $praticiens = $stmt->fetchAll();
 </head>
 <body>
 <nav>
-  <div class="nav-brand"><i class="fas fa-user-tie"></i> ORAVIE <span>Commercial</span></div>
+  <div class="nav-brand"><i class="fas fa-user-tie"></i> ORAVIE <span>Partner</span></div>
   <div class="nav-right">
     <span class="nav-user"><i class="fas fa-user"></i> <?= htmlspecialchars($_SESSION['partner_nom'] ?? '') ?></span>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>

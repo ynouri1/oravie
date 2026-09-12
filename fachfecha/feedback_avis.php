@@ -151,6 +151,7 @@ $allAvis = $pdo->query("
         </div>
         <div class="nav-links">
             <a href="dashboard.php"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="feedback_emails.php"><i class="fas fa-envelope"></i> Historique Emails</a>
             <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
         </div>
     </nav>

@@ -18,6 +18,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Limitation anti-spam : pas plus de 5 commandes par 10 minutes et par session
+$rl_now    = time();
+$rl_window = 600;
+$rl_max    = 5;
+$_SESSION['order_times'] = array_filter(
+    $_SESSION['order_times'] ?? [],
+    fn($t) => $t > $rl_now - $rl_window
+);
+if (count($_SESSION['order_times']) >= $rl_max) {
+    http_response_code(429);
+    ob_clean();
+    echo json_encode(['success' => false, 'message' => 'Trop de commandes en peu de temps. Veuillez patienter quelques minutes.']);
+    exit;
+}
+
 // Charger les variables d'environnement
 $env = parse_ini_file(__DIR__ . '/envprod');
 if (!$env) {
@@ -79,12 +94,19 @@ try {
     ]);
 
     // Création automatique de la table si elle n'existe pas
+    // Le schéma doit contenir toutes les colonnes utilisées par l'INSERT ci-dessous
+    // et par le back-office (praticien_id, lot_id, prix_total, suivi feedback).
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS commandes (
-            id            INT AUTO_INCREMENT PRIMARY KEY,
-            date_commande DATETIME DEFAULT CURRENT_TIMESTAMP,
-            donnees       JSON NOT NULL,
-            statut        VARCHAR(50) DEFAULT 'nouvelle'
+            id                     INT AUTO_INCREMENT PRIMARY KEY,
+            date_commande          DATETIME DEFAULT CURRENT_TIMESTAMP,
+            donnees                JSON NOT NULL,
+            statut                 VARCHAR(50) DEFAULT 'nouvelle',
+            praticien_id           INT NULL DEFAULT NULL,
+            lot_id                 INT NULL DEFAULT NULL,
+            prix_total             DECIMAL(10,2) NULL DEFAULT NULL,
+            feedback_email_sent_at DATETIME NULL DEFAULT NULL,
+            feedback_token         VARCHAR(64) NULL DEFAULT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ");
 
@@ -160,6 +182,9 @@ try {
     ]);
 
     $newId = $pdo->lastInsertId();
+
+    // Enregistrer l'horodatage pour la limitation anti-spam
+    $_SESSION['order_times'][] = time();
 
     // Décrémenter le stock pour chaque produit
     $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id");
@@ -249,7 +274,8 @@ try {
         $mail->AltBody = "Nouvelle commande #$newId\nClient : $civilite $prenom $nom\nTel : $telephone\nAdresse : $adresse, $code_postal $ville\nSous-total : " . number_format($prix_total, 2) . " DT\nFrais de livraison : " . number_format($frais_livraison, 2) . " DT\nTotal : " . number_format($prix_total_avec_frais, 2) . " DT";
         $mail->send();
     } catch (Exception $e) {
-        // Silencieux — la commande est déjà enregistrée
+        // La commande est déjà enregistrée : on n'interrompt pas, mais on trace l'échec.
+        error_log('commander.php - echec email admin commande #' . $newId . ' : ' . $e->getMessage());
     }
 
     // ── EMAIL CONFIRMATION CLIENT ────────────────────────────────────────────
@@ -336,7 +362,8 @@ try {
             $mailClient->AltBody = "Bonjour $prenom $nom,\n\nMerci pour votre commande #$newId.\nSous-total : " . number_format($prix_total, 2) . " DT\nFrais de livraison : " . number_format($frais_livraison, 2) . " DT\nTotal : " . number_format($prix_total_avec_frais, 2) . " DT\n\nNous vous contacterons prochainement.\n\nORAVIE\ncontact@oravie.tn";
             $mailClient->send();
         } catch (Exception $e) {
-            // Silencieux — la commande est déjà enregistrée
+            // La commande est déjà enregistrée : on n'interrompt pas, mais on trace l'échec.
+            error_log('commander.php - echec email client commande #' . $newId . ' : ' . $e->getMessage());
         }
     }
 

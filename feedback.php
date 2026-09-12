@@ -80,25 +80,39 @@ try {
                     // Table existe déjà
                 }
 
-                // Insérer l'avis
-                $stmt = $pdo->prepare("
-                    INSERT INTO feedback_avis (commande_id, nom_client, email_client, avis_produit, avis_livraison, avis_site, avis_general, remarques, ameliorations)
-                    VALUES (:cmd_id, :nom, :email, :prod, :liv, :site, :gen, :rem, :amel)
-                ");
+                // Empêcher les doublons : un seul avis par commande
+                $dejaAvis = false;
+                try {
+                    $chk = $pdo->prepare("SELECT 1 FROM feedback_avis WHERE commande_id = :cid LIMIT 1");
+                    $chk->execute([':cid' => $cmd_id]);
+                    $dejaAvis = (bool) $chk->fetchColumn();
+                } catch (Exception $e) {
+                    $dejaAvis = false;
+                }
 
-                $stmt->execute([
-                    ':cmd_id' => $cmd_id,
-                    ':nom' => $nom_client,
-                    ':email' => $email_client,
-                    ':prod' => $avis_produit,
-                    ':liv' => $avis_livraison,
-                    ':site' => $avis_site,
-                    ':gen' => $avis_general,
-                    ':rem' => $remarques,
-                    ':amel' => $ameliorations,
-                ]);
+                if ($dejaAvis) {
+                    $error = 'Un avis a déjà été enregistré pour cette commande. Merci !';
+                } else {
+                    // Insérer l'avis
+                    $stmt = $pdo->prepare("
+                        INSERT INTO feedback_avis (commande_id, nom_client, email_client, avis_produit, avis_livraison, avis_site, avis_general, remarques, ameliorations)
+                        VALUES (:cmd_id, :nom, :email, :prod, :liv, :site, :gen, :rem, :amel)
+                    ");
 
-                $success = true;
+                    $stmt->execute([
+                        ':cmd_id' => $cmd_id,
+                        ':nom' => $nom_client,
+                        ':email' => $email_client,
+                        ':prod' => $avis_produit,
+                        ':liv' => $avis_livraison,
+                        ':site' => $avis_site,
+                        ':gen' => $avis_general,
+                        ':rem' => $remarques,
+                        ':amel' => $ameliorations,
+                    ]);
+
+                    $success = true;
+                }
             }
         }
     }

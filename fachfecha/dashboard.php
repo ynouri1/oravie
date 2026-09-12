@@ -53,12 +53,6 @@ try {
     // Table doesn't exist
 }
 
-// Comptage par statut
-$statusCounts = [];
-foreach ($pdo->query("SELECT statut, COUNT(*) AS n FROM commandes GROUP BY statut")->fetchAll() as $r) {
-    $statusCounts[$r['statut']] = $r['n'];
-}
-
 // Liste des commandes
 $sql = "
     SELECT

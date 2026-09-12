@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $mailer->SMTPAuth = true;
         $mailer->Username = $env_config['MAIL_USER'];
         $mailer->Password = $env_config['MAIL_PASS'];
-        $mailer->SMTPSecure = 'ssl';
+        $mailer->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
         $mailer->Port = (int)$env_config['MAIL_PORT'];
         $mailer->SetFrom($env_config['MAIL_FROM'], $env_config['MAIL_FROM_NAME'] ?? 'ORAVIE');
         $mailer->isHTML(true);

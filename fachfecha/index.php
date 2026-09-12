@@ -13,16 +13,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username && $password) {
         try {
             $pdo  = getDB();
-            $stmt = $pdo->prepare("SELECT id, password FROM admins WHERE username = :u LIMIT 1");
+            ensureRolesSchema($pdo);
+            $stmt = $pdo->prepare("SELECT id, password, role, actif FROM admins WHERE username = :u LIMIT 1");
             $stmt->execute([':u' => $username]);
             $admin = $stmt->fetch();
 
             if ($admin && password_verify($password, $admin['password'])) {
-                session_regenerate_id(true);
-                $_SESSION['admin_id']      = $admin['id'];
-                $_SESSION['admin_user']    = $username;
-                $_SESSION['last_activity'] = time();
-                header('Location: dashboard.php'); exit;
+                if (($admin['role'] ?? 'admin') !== 'admin' || (isset($admin['actif']) && !$admin['actif'])) {
+                    $error = 'Ce compte n\'est pas autorisé pour l\'administration.';
+                } else {
+                    session_regenerate_id(true);
+                    $_SESSION['admin_id']      = $admin['id'];
+                    $_SESSION['admin_user']    = $username;
+                    $_SESSION['admin_role']    = 'admin';
+                    $_SESSION['last_activity'] = time();
+                    header('Location: dashboard.php'); exit;
+                }
             } else {
                 $error = 'Identifiant ou mot de passe incorrect.';
             }

@@ -41,6 +41,21 @@ function csrfCheck(): void {
     }
 }
 
+/**
+ * Ajoute (si absentes) les colonnes nécessaires à la gestion des rôles.
+ * Garantit que role/nom/actif existent avant toute requête qui les utilise.
+ */
+function ensureRolesSchema(PDO $pdo): void {
+    try { $pdo->exec("ALTER TABLE admins ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'admin'"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE admins ADD COLUMN nom VARCHAR(150) NULL"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE admins ADD COLUMN actif TINYINT(1) NOT NULL DEFAULT 1"); } catch (Exception $e) {}
+}
+
+/** Rôle de l'utilisateur admin connecté. */
+function currentRole(): string {
+    return $_SESSION['admin_role'] ?? 'admin';
+}
+
 function getDB(): PDO {
     static $pdo = null;
     if ($pdo) return $pdo;

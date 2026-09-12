@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
             // Générer un token unique pour ce client
             $token = bin2hex(random_bytes(16));
-            $feedback_url = "https://oravie.tn/feedback.php?id={$cmd['id']}&token={$token}";
+            $feedback_url = "https://www.oravie.tn/feedback.php?id={$cmd['id']}&token={$token}";
 
             // Email HTML
             $html = "

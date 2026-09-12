@@ -6,6 +6,7 @@ $pdo = getDB();
 
 // Handle quick status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'], $_POST['statut'])) {
+    csrfCheck();
     $validStatuts = ['nouvelle', 'confirmée', 'expédiée', 'livrée', 'annulée'];
     $id = filter_var($_POST['id'], FILTER_VALIDATE_INT);
     if ($id && in_array($_POST['statut'], $validStatuts)) {
@@ -50,12 +51,6 @@ try {
     $hasPraticiens = true;
 } catch (Exception $e) {
     // Table doesn't exist
-}
-
-// Comptage par statut
-$statusCounts = [];
-foreach ($pdo->query("SELECT statut, COUNT(*) AS n FROM commandes GROUP BY statut")->fetchAll() as $r) {
-    $statusCounts[$r['statut']] = $r['n'];
 }
 
 // Liste des commandes

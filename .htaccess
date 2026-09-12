@@ -3,3 +3,17 @@
     Order allow,deny
     Deny from all
 </Files>
+
+# Interdire l'accès aux scripts de maintenance/diagnostic (fuite de configuration)
+<Files "feedback_diagnostic.php">
+    Order allow,deny
+    Deny from all
+</Files>
+<Files "migrate_pricing.php">
+    Order allow,deny
+    Deny from all
+</Files>
+<Files "index.php_old">
+    Order allow,deny
+    Deny from all
+</Files>

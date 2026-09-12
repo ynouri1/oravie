@@ -26,6 +26,7 @@ $msg  = '';
 
 // ── SUPPRIMER ─────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    csrfCheck();
     $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
     if ($id) {
         $pdo->prepare("DELETE FROM mouvements_lot WHERE id = :id")->execute([':id' => $id]);
@@ -37,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 
 // ── AJOUTER ───────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add') {
+    csrfCheck();
     $validTypes = ['production', 'vendu', 'défectueux', 'échantillon', 'retour'];
     $lot_id   = filter_var($_POST['lot_id']  ?? '', FILTER_VALIDATE_INT) ?: null;
     $type     = in_array($_POST['type'] ?? '', $validTypes) ? $_POST['type'] : '';
@@ -396,6 +398,7 @@ $lotColors = ['#2F4B3C','#C6A43F','#3B82F6','#8B5CF6','#F97316','#EF4444','#10B9
               </td>
               <td>
                 <form method="POST" onsubmit="return confirm('Supprimer ce mouvement ?')">
+                  <?= csrfField() ?>
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="id"    value="<?= (int)$mv['id'] ?>">
                   <input type="hidden" name="flot"  value="<?= htmlspecialchars($filterLot) ?>">
@@ -416,6 +419,7 @@ $lotColors = ['#2F4B3C','#C6A43F','#3B82F6','#8B5CF6','#F97316','#EF4444','#10B9
         <div class="card-header"><i class="fas fa-plus-circle"></i> Ajouter un mouvement</div>
         <div class="card-body">
           <form method="POST">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="add">
             <input type="hidden" name="flot"   value="<?= htmlspecialchars($filterLot) ?>">
 

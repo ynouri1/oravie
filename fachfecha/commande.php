@@ -26,6 +26,7 @@ try {
 
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['statut'])) {
+    csrfCheck();
     $validStatuts = ['nouvelle', 'confirmée', 'expédiée', 'livrée', 'annulée'];
     if (in_array($_POST['statut'], $validStatuts)) {
         $pdo->prepare("UPDATE commandes SET statut = :s WHERE id = :id")
@@ -36,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['statut'])) {
 
 // Handle lot assignment
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_lot') {
+    csrfCheck();
     $lot_id = filter_var($_POST['lot_id'] ?? '', FILTER_VALIDATE_INT) ?: null;
     $pdo->prepare("UPDATE commandes SET lot_id = :lid WHERE id = :id")
         ->execute([':lid' => $lot_id, ':id' => $id]);
@@ -44,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
 
 // Handle praticien assignment
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_praticien') {
+    csrfCheck();
     $praticien_id = filter_var($_POST['praticien_id'] ?? '', FILTER_VALIDATE_INT) ?: null;
     $pdo->prepare("UPDATE commandes SET praticien_id = :pid WHERE id = :id")
         ->execute([':pid' => $praticien_id, ':id' => $id]);
@@ -291,6 +294,7 @@ $lignes = $d['lignes'] ?? [];
       <div class="card">
         <div class="card-title"><i class="fas fa-exchange-alt"></i> Modifier le statut</div>
         <form method="POST" class="status-form">
+          <?= csrfField() ?>
           <select name="statut">
             <?php foreach (['nouvelle', 'confirmée', 'expédiée', 'livrée', 'annulée'] as $s): ?>
             <option value="<?= $s ?>" <?= $row['statut'] === $s ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
@@ -304,6 +308,7 @@ $lignes = $d['lignes'] ?? [];
       <div class="card">
         <div class="card-title"><i class="fas fa-layer-group"></i> Lot associé</div>
         <form method="POST" class="status-form">
+          <?= csrfField() ?>
           <input type="hidden" name="action" value="update_lot">
           <select name="lot_id">
             <option value="">— Aucun lot —</option>
@@ -322,6 +327,7 @@ $lignes = $d['lignes'] ?? [];
       <div class="card">
         <div class="card-title"><i class="fas fa-stethoscope"></i> Praticien prescripteur</div>
         <form method="POST" class="status-form">
+          <?= csrfField() ?>
           <input type="hidden" name="action" value="update_praticien">
           <select name="praticien_id">
             <option value="">— Aucun praticien —</option>

@@ -25,13 +25,16 @@ try {
     $commande = null;
 
     if ($cmd_id && $token) {
-        // Charger la commande
-        $stmt = $pdo->prepare("SELECT id, donnees, date_commande FROM commandes WHERE id = :id");
+        // Charger la commande et vérifier le token de feedback
+        $stmt = $pdo->prepare("SELECT id, donnees, date_commande, feedback_token FROM commandes WHERE id = :id");
         $stmt->execute([':id' => $cmd_id]);
         $commande = $stmt->fetch();
 
-        if (!$commande) {
-            $error = 'Commande introuvable.';
+        // Le token doit correspondre exactement à celui enregistré lors de l'envoi de l'email.
+        // Échec fermé : on ne divulgue aucune donnée de la commande si le token est invalide.
+        if (!$commande || empty($commande['feedback_token']) || !hash_equals((string) $commande['feedback_token'], (string) $token)) {
+            $commande = null;
+            $error = 'Lien invalide ou expiré.';
         }
     } else {
         $error = 'Paramètres manquants ou invalides.';
@@ -77,25 +80,39 @@ try {
                     // Table existe déjà
                 }
 
-                // Insérer l'avis
-                $stmt = $pdo->prepare("
-                    INSERT INTO feedback_avis (commande_id, nom_client, email_client, avis_produit, avis_livraison, avis_site, avis_general, remarques, ameliorations)
-                    VALUES (:cmd_id, :nom, :email, :prod, :liv, :site, :gen, :rem, :amel)
-                ");
+                // Empêcher les doublons : un seul avis par commande
+                $dejaAvis = false;
+                try {
+                    $chk = $pdo->prepare("SELECT 1 FROM feedback_avis WHERE commande_id = :cid LIMIT 1");
+                    $chk->execute([':cid' => $cmd_id]);
+                    $dejaAvis = (bool) $chk->fetchColumn();
+                } catch (Exception $e) {
+                    $dejaAvis = false;
+                }
 
-                $stmt->execute([
-                    ':cmd_id' => $cmd_id,
-                    ':nom' => $nom_client,
-                    ':email' => $email_client,
-                    ':prod' => $avis_produit,
-                    ':liv' => $avis_livraison,
-                    ':site' => $avis_site,
-                    ':gen' => $avis_general,
-                    ':rem' => $remarques,
-                    ':amel' => $ameliorations,
-                ]);
+                if ($dejaAvis) {
+                    $error = 'Un avis a déjà été enregistré pour cette commande. Merci !';
+                } else {
+                    // Insérer l'avis
+                    $stmt = $pdo->prepare("
+                        INSERT INTO feedback_avis (commande_id, nom_client, email_client, avis_produit, avis_livraison, avis_site, avis_general, remarques, ameliorations)
+                        VALUES (:cmd_id, :nom, :email, :prod, :liv, :site, :gen, :rem, :amel)
+                    ");
 
-                $success = true;
+                    $stmt->execute([
+                        ':cmd_id' => $cmd_id,
+                        ':nom' => $nom_client,
+                        ':email' => $email_client,
+                        ':prod' => $avis_produit,
+                        ':liv' => $avis_livraison,
+                        ':site' => $avis_site,
+                        ':gen' => $avis_general,
+                        ':rem' => $remarques,
+                        ':amel' => $ameliorations,
+                    ]);
+
+                    $success = true;
+                }
             }
         }
     }
@@ -107,7 +124,8 @@ try {
     }
 
 } catch (PDOException $e) {
-    $error = 'Erreur base de données : ' . $e->getMessage();
+    error_log('feedback.php DB error: ' . $e->getMessage());
+    $error = 'Service momentanément indisponible. Veuillez réessayer plus tard.';
 }
 ?><!DOCTYPE html>
 <html lang="fr">

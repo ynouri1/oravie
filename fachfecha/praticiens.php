@@ -47,6 +47,7 @@ $msgType = $_GET['t'] ?? 'success';
 
 $praticiens = [];
 $praticien_edit = null;
+$commerciaux = [];
 
 if ($tableExists) {
     // Ajouter les colonnes manquantes si elles n'existent pas
@@ -58,6 +59,16 @@ if ($tableExists) {
         } catch (Exception $alterError) {
             // Les colonnes existent peut-être déjà
         }
+    }
+
+    // Rattachement d'un praticien à un commercial + liste des commerciaux pour le select
+    try { $pdo->exec("ALTER TABLE praticiens ADD COLUMN commercial_id INT NULL DEFAULT NULL"); } catch (Exception $e) {}
+    ensureRolesSchema($pdo);
+    $commerciaux = [];
+    try {
+        $commerciaux = $pdo->query("SELECT id, nom, username FROM admins WHERE role = 'commercial' AND actif = 1 ORDER BY nom, username")->fetchAll();
+    } catch (Exception $e) {
+        $commerciaux = [];
     }
 
     // Traitement des actions POST
@@ -79,34 +90,35 @@ if ($tableExists) {
             $date_visite = trim($_POST['date_visite'] ?? '');
             $notes = trim($_POST['notes'] ?? '');
             $actif = isset($_POST['actif']) ? 1 : 0;
+            $commercial_id = filter_var($_POST['commercial_id'] ?? '', FILTER_VALIDATE_INT) ?: null;
 
             if ($nom && $prenom) {
                 if ($id > 0) {
                     // Modification
                     $pdo->prepare("
-                        UPDATE praticiens 
-                        SET nom = :nom, prenom = :prenom, specialite = :specialite, 
-                            telephone = :telephone, email = :email, adresse = :adresse, 
+                        UPDATE praticiens
+                        SET nom = :nom, prenom = :prenom, specialite = :specialite,
+                            telephone = :telephone, email = :email, adresse = :adresse,
                             ville = :ville, code_postal = :code_postal, date_visite = :date_visite,
-                            notes = :notes, actif = :actif 
+                            notes = :notes, actif = :actif, commercial_id = :commercial_id
                         WHERE id = :id
                     ")->execute([
                         ':nom' => $nom, ':prenom' => $prenom, ':specialite' => $specialite,
                         ':telephone' => $telephone, ':email' => $email, ':adresse' => $adresse,
                         ':ville' => $ville, ':code_postal' => $code_postal, ':date_visite' => ($date_visite ?: null),
-                        ':notes' => $notes, ':actif' => $actif, ':id' => $id
+                        ':notes' => $notes, ':actif' => $actif, ':commercial_id' => $commercial_id, ':id' => $id
                     ]);
                     $msg = 'Praticien modifié avec succès.';
                 } else {
                     // Ajout
                     $pdo->prepare("
-                        INSERT INTO praticiens (nom, prenom, specialite, telephone, email, adresse, ville, code_postal, date_visite, notes, actif)
-                        VALUES (:nom, :prenom, :specialite, :telephone, :email, :adresse, :ville, :code_postal, :date_visite, :notes, :actif)
+                        INSERT INTO praticiens (nom, prenom, specialite, telephone, email, adresse, ville, code_postal, date_visite, notes, actif, commercial_id)
+                        VALUES (:nom, :prenom, :specialite, :telephone, :email, :adresse, :ville, :code_postal, :date_visite, :notes, :actif, :commercial_id)
                     ")->execute([
                         ':nom' => $nom, ':prenom' => $prenom, ':specialite' => $specialite,
                         ':telephone' => $telephone, ':email' => $email, ':adresse' => $adresse,
                         ':ville' => $ville, ':code_postal' => $code_postal, ':date_visite' => ($date_visite ?: null),
-                        ':notes' => $notes, ':actif' => $actif
+                        ':notes' => $notes, ':actif' => $actif, ':commercial_id' => $commercial_id
                     ]);
                     $msg = 'Praticien ajouté avec succès.';
                 }
@@ -571,6 +583,8 @@ if ($tableExists) {
     <a href="depenses.php"><i class="fas fa-receipt"></i> Dépenses</a>
     <a href="mouvements.php"><i class="fas fa-boxes"></i> Stock lots</a>
     <a href="feedback_avis.php"><i class="fas fa-comments"></i> Avis clients</a>
+    <a href="commerciaux.php"><i class="fas fa-user-tie"></i> Commerciaux</a>
+    <a href="visites.php"><i class="fas fa-map-marked-alt"></i> Visites</a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
   </div>
 </nav>
@@ -665,6 +679,18 @@ if ($tableExists) {
         <div class="form-group">
           <label for="notes">Notes</label>
           <textarea id="notes" name="notes" placeholder="Ajouter des notes..." style="min-height:100px;"><?= htmlspecialchars($praticien_edit['notes'] ?? '') ?></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="commercial_id">Commercial assigné</label>
+          <select id="commercial_id" name="commercial_id" class="filter-select" style="width:100%;">
+            <option value="">— Aucun —</option>
+            <?php foreach ($commerciaux as $c): ?>
+            <option value="<?= (int)$c['id'] ?>" <?= (($praticien_edit['commercial_id'] ?? null) == $c['id']) ? 'selected' : '' ?>>
+              <?= htmlspecialchars(trim(($c['nom'] ?? '') !== '' ? $c['nom'] : $c['username'])) ?>
+            </option>
+            <?php endforeach; ?>
+          </select>
         </div>
 
         <div class="form-group" style="margin-bottom:0;">

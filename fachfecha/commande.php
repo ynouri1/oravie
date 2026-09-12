@@ -199,6 +199,8 @@ $lignes = $d['lignes'] ?? [];
     <a href="produits.php"><i class="fas fa-box"></i> Produits</a>
     <a href="depenses.php"><i class="fas fa-receipt"></i> Dépenses</a>
     <a href="mouvements.php"><i class="fas fa-boxes"></i> Stock lots</a>
+    <a href="commerciaux.php"><i class="fas fa-user-tie"></i> Commerciaux</a>
+    <a href="visites.php"><i class="fas fa-map-marked-alt"></i> Visites</a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
   </div>
 </nav>

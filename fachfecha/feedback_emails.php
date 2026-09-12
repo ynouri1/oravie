@@ -57,19 +57,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         // Charger config SMTP depuis envprod
         $env_config = parse_ini_file('../envprod');
-        if (!$env_config || !isset($env_config['SMTP_HOST'])) {
+        if (!$env_config || !isset($env_config['MAIL_HOST'])) {
             throw new Exception('Configuration SMTP non trouvée dans envprod');
         }
 
         // Config SMTP
         $mailer->isSMTP();
-        $mailer->Host = $env_config['SMTP_HOST'];
+        $mailer->Host = $env_config['MAIL_HOST'];
         $mailer->SMTPAuth = true;
-        $mailer->Username = $env_config['SMTP_USER'];
-        $mailer->Password = $env_config['SMTP_PASS'];
+        $mailer->Username = $env_config['MAIL_USER'];
+        $mailer->Password = $env_config['MAIL_PASS'];
         $mailer->SMTPSecure = 'ssl';
-        $mailer->Port = (int)$env_config['SMTP_PORT'];
-        $mailer->SetFrom($env_config['SMTP_FROM'], 'ORAVIE');
+        $mailer->Port = (int)$env_config['MAIL_PORT'];
+        $mailer->SetFrom($env_config['MAIL_FROM'], $env_config['MAIL_FROM_NAME'] ?? 'ORAVIE');
         $mailer->isHTML(true);
 
         try {

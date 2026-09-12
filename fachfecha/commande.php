@@ -192,6 +192,7 @@ $lignes = $d['lignes'] ?? [];
   <div class="nav-brand"><i class="fas fa-leaf"></i> ORAVIE <span>Admin</span></div>
   <div class="nav-links">
     <a href="dashboard.php"><i class="fas fa-list-alt"></i> Commandes</a>
+    <a href="commande_ajouter.php"><i class="fas fa-plus-circle"></i> Nouvelle commande</a>
     <a href="produits.php"><i class="fas fa-box"></i> Produits</a>
     <a href="depenses.php"><i class="fas fa-receipt"></i> Dépenses</a>
     <a href="mouvements.php"><i class="fas fa-boxes"></i> Stock lots</a>

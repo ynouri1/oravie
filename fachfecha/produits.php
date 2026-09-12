@@ -6,15 +6,24 @@ $pdo = getDB();
 $msg = '';
 $msgType = 'success';
 
+// Migration : colonne prix_praticien (prix spécial, jamais exposé au public)
+try {
+    if (empty($pdo->query("SHOW COLUMNS FROM produits LIKE 'prix_praticien'")->fetchAll())) {
+        $pdo->exec("ALTER TABLE produits ADD COLUMN prix_praticien DECIMAL(8,2) NULL DEFAULT NULL");
+    }
+} catch (Exception $e) {}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'])) {
     $pid = filter_var($_POST['id'], FILTER_VALIDATE_INT);
     if ($pid && $_POST['action'] === 'update') {
         $prix  = filter_var($_POST['prix']  ?? '', FILTER_VALIDATE_FLOAT);
         $stock = filter_var($_POST['stock'] ?? '', FILTER_VALIDATE_INT);
         $actif = isset($_POST['actif']) ? 1 : 0;
-        if ($prix !== false && $stock !== false && $prix >= 0 && $stock >= 0) {
-            $pdo->prepare("UPDATE produits SET prix = :p, stock = :s, actif = :a WHERE id = :id")
-                ->execute([':p' => $prix, ':s' => $stock, ':a' => $actif, ':id' => $pid]);
+        $prixPraticienRaw = trim($_POST['prix_praticien'] ?? '');
+        $prixPraticien = $prixPraticienRaw === '' ? null : filter_var($prixPraticienRaw, FILTER_VALIDATE_FLOAT);
+        if ($prix !== false && $stock !== false && $prix >= 0 && $stock >= 0 && $prixPraticien !== false) {
+            $pdo->prepare("UPDATE produits SET prix = :p, stock = :s, actif = :a, prix_praticien = :pp WHERE id = :id")
+                ->execute([':p' => $prix, ':s' => $stock, ':a' => $actif, ':pp' => $prixPraticien, ':id' => $pid]);
             $msg = 'Produit mis à jour avec succès.';
         } else {
             $msg = 'Valeurs invalides.'; $msgType = 'error';
@@ -131,11 +140,13 @@ $msgType  = $_GET['t'] ?? 'success';
   <div class="nav-brand"><i class="fas fa-leaf"></i> ORAVIE <span>Admin</span></div>
   <div class="nav-links">
     <a href="dashboard.php"><i class="fas fa-list-alt"></i> Commandes</a>
+    <a href="commande_ajouter.php"><i class="fas fa-plus-circle"></i> Nouvelle commande</a>
     <a href="produits.php" class="active"><i class="fas fa-box"></i> Produits</a>
     <a href="praticiens.php"><i class="fas fa-stethoscope"></i> Praticiens</a>
     <a href="stats.php"><i class="fas fa-chart-bar"></i> Statistiques</a>
     <a href="depenses.php"><i class="fas fa-receipt"></i> Dépenses</a>
     <a href="mouvements.php"><i class="fas fa-boxes"></i> Stock lots</a>
+    <a href="feedback_avis.php"><i class="fas fa-comments"></i> Avis clients</a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
   </div>
 </nav>
@@ -168,6 +179,10 @@ $msgType  = $_GET['t'] ?? 'success';
         <div class="edit-group">
           <label>Prix (DT)</label>
           <input type="number" name="prix" value="<?= $p['prix'] ?>" min="0" step="0.5" required>
+        </div>
+        <div class="edit-group">
+          <label>Prix praticien (DT)</label>
+          <input type="number" name="prix_praticien" value="<?= $p['prix_praticien'] !== null ? $p['prix_praticien'] : '' ?>" min="0" step="0.5" placeholder="Optionnel">
         </div>
         <div class="edit-group">
           <label>Stock <span style="color:<?= $stockColor ?>; font-weight:700;">(<?= $stockLabel ?>)</span></label>

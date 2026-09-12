@@ -5,18 +5,36 @@
  * Accès sécurisé : ?token=oravie_cron_token_2026
  */
 
+// Vérifier token d'accès
 define('CRON_TOKEN', 'oravie_cron_token_2026');
 if (($_GET['token'] ?? '') !== CRON_TOKEN) {
     http_response_code(403);
     die('Accès refusé.');
 }
 
+// Header pour texte brut
+header('Content-Type: text/plain; charset=UTF-8');
+
+// Charger configuration
 $env = parse_ini_file(__DIR__ . '/envprod');
 if (!$env) {
-    die('Erreur : fichier envprod introuvable.');
+    die('❌ Erreur : fichier envprod introuvable.');
 }
 
+// Charger PHPMailer
+if (!file_exists(__DIR__ . '/vendor/phpmailer/PHPMailer.php')) {
+    die("❌ Erreur : PHPMailer non installé.\n");
+}
+
+require_once __DIR__ . '/vendor/phpmailer/Exception.php';
+require_once __DIR__ . '/vendor/phpmailer/PHPMailer.php';
+require_once __DIR__ . '/vendor/phpmailer/SMTP.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as MailException;
+
 try {
+    // Connexion base de données
     $dsn = 'mysql:host=' . $env['DB_HOST'] . ';dbname=' . $env['DB_NAME'] . ';charset=utf8mb4';
     $pdo = new PDO($dsn, $env['DB_USER'], $env['DB_PASS'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -32,13 +50,6 @@ try {
     } catch (Exception $e) {
         echo "⚠️  Colonne feedback_email_sent_at : " . $e->getMessage() . "\n";
     }
-
-    // Charger PHPMailer
-    require_once __DIR__ . '/vendor/phpmailer/Exception.php';
-    require_once __DIR__ . '/vendor/phpmailer/PHPMailer.php';
-    require_once __DIR__ . '/vendor/phpmailer/SMTP.php';
-    use PHPMailer\PHPMailer\PHPMailer;
-    use PHPMailer\PHPMailer\Exception as MailException;
 
     // Chercher les commandes livrées il y a 2 semaines dont l'email n'a pas été envoyé
     $sql = "
@@ -167,4 +178,6 @@ try {
 
 } catch (PDOException $e) {
     die('❌ Erreur DB : ' . $e->getMessage());
+} catch (Exception $e) {
+    die('❌ Erreur : ' . $e->getMessage());
 }

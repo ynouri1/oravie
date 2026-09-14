@@ -90,6 +90,8 @@ $praticiens = $stmt->fetchAll();
     td { padding:11px 14px; font-size:0.88rem; border-top:1px solid #F0F4EC; vertical-align:middle; }
     .btn-view { background:#EFF3EA; color:#2F4B3C; border:none; border-radius:0.6rem; padding:6px 14px; font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:none; }
     .btn-view:hover { background:#DCE9D4; }
+    .prac-link { color:#2F4B3C; text-decoration:none; }
+    .prac-link:hover { color:#4A735C; text-decoration:underline; }
     .empty { text-align:center; padding:2.5rem; color:#92A389; }
     .empty i { font-size:2rem; display:block; margin-bottom:0.5rem; }
     @media (max-width:768px){ .grid{grid-template-columns:1fr;} table{display:block;overflow-x:auto;} }
@@ -169,7 +171,7 @@ $praticiens = $stmt->fetchAll();
       <tbody>
       <?php foreach ($praticiens as $p): ?>
         <tr>
-          <td><strong><?= htmlspecialchars($p['prenom'] . ' ' . $p['nom']) ?></strong><br><small style="color:#92A389;"><?= htmlspecialchars($p['telephone'] ?? '') ?></small></td>
+          <td><a href="praticien.php?id=<?= (int)$p['id'] ?>" class="prac-link"><strong><?= htmlspecialchars($p['prenom'] . ' ' . $p['nom']) ?></strong></a><br><small style="color:#92A389;"><?= htmlspecialchars($p['telephone'] ?? '') ?></small></td>
           <td><?= htmlspecialchars($p['specialite'] ?: '—') ?></td>
           <td><?= htmlspecialchars(implode(' - ', array_filter([$p['adresse'] ?? '', $p['ville'] ?? ''], fn($x) => trim((string)$x) !== ''))) ?: '—' ?></td>
           <td><?= (int)$p['nb_visites'] ?></td>

@@ -828,6 +828,7 @@ document.querySelectorAll('.edit-btn').forEach(btn => {
       document.getElementById('code_postal').value = p.code_postal || '';
       document.getElementById('date_visite').value = p.date_visite || '';
       document.getElementById('notes').value = p.notes || '';
+      document.getElementById('commercial_id').value = p.commercial_id || '';
       document.querySelector('input[name="actif"]').checked = p.actif == 1;
       
       document.querySelector('.form-panel h2 i').className = 'fas fa-edit';

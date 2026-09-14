@@ -42,7 +42,7 @@ $msgType = $_GET['t'] ?? 'success';
 
 // Uniquement les praticiens du commercial connecté
 $stmt = $pdo->prepare("
-    SELECT p.id, p.prenom, p.nom, p.specialite, p.ville, p.telephone,
+    SELECT p.id, p.prenom, p.nom, p.specialite, p.adresse, p.ville, p.telephone,
            (SELECT COUNT(*) FROM visites v WHERE v.praticien_id = p.id) AS nb_visites,
            (SELECT MAX(v.date_visite) FROM visites v WHERE v.praticien_id = p.id) AS derniere_visite
     FROM praticiens p
@@ -164,14 +164,14 @@ $praticiens = $stmt->fetchAll();
     <?php else: ?>
     <table>
       <thead>
-        <tr><th>Praticien</th><th>Spécialité</th><th>Ville</th><th>Visites</th><th>Dernière visite</th><th></th></tr>
+        <tr><th>Praticien</th><th>Spécialité</th><th>Adresse - Ville</th><th>Visites</th><th>Dernière visite</th><th></th></tr>
       </thead>
       <tbody>
       <?php foreach ($praticiens as $p): ?>
         <tr>
           <td><strong><?= htmlspecialchars($p['prenom'] . ' ' . $p['nom']) ?></strong><br><small style="color:#92A389;"><?= htmlspecialchars($p['telephone'] ?? '') ?></small></td>
           <td><?= htmlspecialchars($p['specialite'] ?: '—') ?></td>
-          <td><?= htmlspecialchars($p['ville'] ?: '—') ?></td>
+          <td><?= htmlspecialchars(implode(' - ', array_filter([$p['adresse'] ?? '', $p['ville'] ?? ''], fn($x) => trim((string)$x) !== ''))) ?: '—' ?></td>
           <td><?= (int)$p['nb_visites'] ?></td>
           <td><?= $p['derniere_visite'] ? htmlspecialchars(date('d/m/Y', strtotime($p['derniere_visite']))) : '—' ?></td>
           <td><a href="praticien.php?id=<?= (int)$p['id'] ?>" class="btn-view"><i class="fas fa-pen"></i> Gérer</a></td>

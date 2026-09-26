@@ -1,4 +1,12 @@
 <?php
+// Sécurité : ce script ne doit s'exécuter qu'en tâche planifiée (CLI / cron OVH),
+// jamais via une requête web (évite le déclenchement/spam de l'envoi et toute fuite).
+if (PHP_SAPI !== 'cli' && !empty($_SERVER['REQUEST_METHOD'])) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit("Accès interdit : ce script s'exécute uniquement en tâche planifiée.");
+}
+
 /**
  * Rapport hebdomadaire ORAVIE — À envoyer par mail chaque dimanche
  * 

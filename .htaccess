@@ -1,8 +1,15 @@
-# Rediriger le domaine nu vers www (canonique, en HTTPS) — 301
+# Canonisation : domaine nu -> www, et tout le trafic en HTTPS — 301
+# (condition X-Forwarded-Proto = compatible load-balancer OVH, évite les boucles)
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # 1) oravie.tn -> https://www.oravie.tn (conserve chemin + query)
     RewriteCond %{HTTP_HOST} ^oravie\.tn$ [NC]
     RewriteRule ^ https://www.oravie.tn%{REQUEST_URI} [L,R=301]
+
+    # 2) Forcer HTTPS (sur www et les autres hôtes)
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
 
 # Interdire l'accès direct au fichier envprod

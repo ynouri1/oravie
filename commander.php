@@ -170,27 +170,43 @@ try {
         'prix_total_ttc' => $prix_total_avec_frais,
     ], JSON_UNESCAPED_UNICODE);
 
-    // Insertion de la commande
-    $stmt = $pdo->prepare("
-        INSERT INTO commandes (donnees, praticien_id, prix_total) VALUES (:donnees, :praticien_id, :prix)
-    ");
+    // Transaction : décrément atomique du stock + insertion de la commande.
+    // Le décrément conditionnel (stock >= qte) empêche toute survente en cas de
+    // commandes simultanées ; si un produit manque, tout est annulé (rollBack).
+    $pdo->beginTransaction();
+    try {
+        $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1 AND stock >= :qte");
+        foreach ($lignesCommande as $ligne) {
+            $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id']]);
+            if ($stmtStock->rowCount() !== 1) {
+                // Stock devenu insuffisant entre la vérification et l'achat
+                $pdo->rollBack();
+                http_response_code(409);
+                ob_clean();
+                echo json_encode(['success' => false, 'message' => 'Stock insuffisant pour ' . $ligne['produit_nom'] . '. Veuillez réessayer.']);
+                exit;
+            }
+        }
 
-    $stmt->execute([
-        ':donnees' => $donnees,
-        ':praticien_id' => $praticien_id,
-        ':prix' => $prix_total,
-    ]);
+        // Insertion de la commande
+        $stmt = $pdo->prepare("
+            INSERT INTO commandes (donnees, praticien_id, prix_total) VALUES (:donnees, :praticien_id, :prix)
+        ");
+        $stmt->execute([
+            ':donnees' => $donnees,
+            ':praticien_id' => $praticien_id,
+            ':prix' => $prix_total,
+        ]);
+        $newId = $pdo->lastInsertId();
 
-    $newId = $pdo->lastInsertId();
-
-    // Enregistrer l'horodatage pour la limitation anti-spam
-    $_SESSION['order_times'][] = time();
-
-    // Décrémenter le stock pour chaque produit
-    $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id");
-    foreach ($lignesCommande as $ligne) {
-        $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id']]);
+        $pdo->commit();
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e; // repris par le catch global -> réponse 500
     }
+
+    // Enregistrer l'horodatage pour la limitation anti-spam (après commit)
+    $_SESSION['order_times'][] = time();
 
     // Envoi email via mail() natif PHP (pas de connexion SMTP externe, fonctionne sur OVH)
     $lignesHtml = '';

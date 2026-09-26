@@ -114,25 +114,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'origine'         => 'admin_praticien',
         ], JSON_UNESCAPED_UNICODE);
 
-        $stmt = $pdo->prepare("
-            INSERT INTO commandes (donnees, praticien_id, prix_total, statut, lot_id)
-            VALUES (:donnees, :praticien_id, :prix, :statut, :lot_id)
-        ");
-        $stmt->execute([
-            ':donnees'      => $donnees,
-            ':praticien_id' => $praticien_id,
-            ':prix'         => $prix_total,
-            ':statut'       => $statut,
-            ':lot_id'       => $lot_id,
-        ]);
-        $newId = $pdo->lastInsertId();
+        // Transaction : décrément atomique du stock + insertion (évite la survente)
+        $pdo->beginTransaction();
+        try {
+            $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1 AND stock >= :qte");
+            $stockOk = true;
+            foreach ($lignesCommande as $ligne) {
+                $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id']]);
+                if ($stmtStock->rowCount() !== 1) {
+                    $errors[] = 'Stock insuffisant pour ' . $ligne['produit_nom'] . '.';
+                    $stockOk = false;
+                    break;
+                }
+            }
 
-        $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id");
-        foreach ($lignesCommande as $ligne) {
-            $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id']]);
+            if ($stockOk) {
+                $stmt = $pdo->prepare("
+                    INSERT INTO commandes (donnees, praticien_id, prix_total, statut, lot_id)
+                    VALUES (:donnees, :praticien_id, :prix, :statut, :lot_id)
+                ");
+                $stmt->execute([
+                    ':donnees'      => $donnees,
+                    ':praticien_id' => $praticien_id,
+                    ':prix'         => $prix_total,
+                    ':statut'       => $statut,
+                    ':lot_id'       => $lot_id,
+                ]);
+                $newId = $pdo->lastInsertId();
+                $pdo->commit();
+                header('Location: commande.php?id=' . $newId . '&created=1'); exit;
+            }
+            $pdo->rollBack();
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            $errors[] = 'Erreur lors de l\'enregistrement. Veuillez réessayer.';
         }
-
-        header('Location: commande.php?id=' . $newId . '&created=1'); exit;
     }
 }
 ?><!DOCTYPE html>

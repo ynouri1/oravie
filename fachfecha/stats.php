@@ -240,7 +240,6 @@ $stock_info = $pdo->query("
     <a href="feedback_avis.php"><i class="fas fa-comments"></i> Avis clients</a>
     <a href="commerciaux.php"><i class="fas fa-user-tie"></i> Commerciaux</a>
     <a href="visites.php"><i class="fas fa-map-marked-alt"></i> Visites</a>
-    <a href="rapport_praticiens.php"><i class="fas fa-file-medical"></i> Rapport praticiens</a>
     <a href="logout.php" class="logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
   </div>
 </nav>

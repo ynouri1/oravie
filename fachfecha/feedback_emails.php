@@ -151,9 +151,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $send_error = "❌ Erreur lors de l'envoi : " . $mailer->ErrorInfo;
             }
         } catch (Exception $e) {
+            error_log('feedback_emails envoi (cmd #' . ($cmd_id ?? '?') . ') : ' . $e->getMessage());
             $send_error = "❌ Erreur : " . htmlspecialchars($e->getMessage());
         }
     } catch (Exception $e) {
+        error_log('feedback_emails handler : ' . $e->getMessage());
         $send_error = "❌ Erreur : " . htmlspecialchars($e->getMessage());
     }
 }

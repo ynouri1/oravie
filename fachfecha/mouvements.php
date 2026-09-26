@@ -20,6 +20,21 @@ $pdo->exec("
 if (empty($pdo->query("SHOW COLUMNS FROM mouvements_lot LIKE 'depense_id'")->fetchAll())) {
     $pdo->exec("ALTER TABLE mouvements_lot ADD COLUMN depense_id INT NULL DEFAULT NULL");
 }
+// Produit concerné : permet de déduire un échantillon / défectueux du stock vendable
+if (empty($pdo->query("SHOW COLUMNS FROM mouvements_lot LIKE 'produit_id'")->fetchAll())) {
+    $pdo->exec("ALTER TABLE mouvements_lot ADD COLUMN produit_id INT NULL DEFAULT NULL");
+}
+
+// Types de mouvement qui décrémentent le stock vendable (produits.stock)
+$typesDeductibles = ['échantillon', 'défectueux'];
+
+// Liste des produits pour le select (déduction de stock)
+$produitsStock = [];
+try {
+    $produitsStock = $pdo->query("SELECT id, nom, volume_ml FROM produits WHERE actif = 1 ORDER BY volume_ml ASC")->fetchAll();
+} catch (Exception $e) {
+    $produitsStock = [];
+}
 
 $lots = $pdo->query("SELECT * FROM lots ORDER BY numero ASC")->fetchAll();
 $msg  = '';
@@ -29,6 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     csrfCheck();
     $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
     if ($id) {
+        // Si ce mouvement avait déduit du stock vendable, on le restitue avant suppression
+        $mvSel = $pdo->prepare("SELECT type, quantite, produit_id FROM mouvements_lot WHERE id = :id");
+        $mvSel->execute([':id' => $id]);
+        $mvOld = $mvSel->fetch();
+        if ($mvOld && $mvOld['produit_id'] && in_array($mvOld['type'], $typesDeductibles, true)) {
+            $pdo->prepare("UPDATE produits SET stock = stock + :q WHERE id = :pid")
+                ->execute([':q' => (int)$mvOld['quantite'], ':pid' => (int)$mvOld['produit_id']]);
+        }
         $pdo->prepare("DELETE FROM mouvements_lot WHERE id = :id")->execute([':id' => $id]);
         $msg = 'ok:Mouvement supprimé.';
     }
@@ -45,10 +68,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add')
     $quantite = filter_var($_POST['quantite'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
     $date     = $_POST['date_mvt'] ?? '';
     $notes    = trim(strip_tags($_POST['notes'] ?? ''));
+    $produit_id = filter_var($_POST['produit_id'] ?? '', FILTER_VALIDATE_INT) ?: null;
+    // Le produit n'est pertinent que pour les types qui déduisent le stock vendable
+    if (!in_array($type, $typesDeductibles, true)) {
+        $produit_id = null;
+    }
 
     if ($lot_id && $type && $quantite && $date) {
-        $pdo->prepare("INSERT INTO mouvements_lot (lot_id, type, quantite, date_mvt, notes) VALUES (:l,:t,:q,:d,:n)")
-            ->execute([':l'=>$lot_id, ':t'=>$type, ':q'=>$quantite, ':d'=>$date, ':n'=>$notes ?: null]);
+        $pdo->prepare("INSERT INTO mouvements_lot (lot_id, type, quantite, date_mvt, notes, produit_id) VALUES (:l,:t,:q,:d,:n,:p)")
+            ->execute([':l'=>$lot_id, ':t'=>$type, ':q'=>$quantite, ':d'=>$date, ':n'=>$notes ?: null, ':p'=>$produit_id]);
+        // Échantillon / défectueux : déduire aussi du stock vendable (page Produits + site)
+        if ($produit_id && in_array($type, $typesDeductibles, true)) {
+            $pdo->prepare("UPDATE produits SET stock = GREATEST(0, stock - :q) WHERE id = :pid")
+                ->execute([':q'=>$quantite, ':pid'=>$produit_id]);
+        }
         $msg = 'ok:Mouvement ajouté.';
     } else {
         $msg = 'err:Veuillez remplir tous les champs obligatoires.';
@@ -439,10 +472,20 @@ $lotColors = ['#2F4B3C','#C6A43F','#3B82F6','#8B5CF6','#F97316','#EF4444','#10B9
 
             <div class="form-group">
               <label>Type *</label>
-              <select name="type" required>
+              <select name="type" id="typeSelect" required>
                 <option value="">— Choisir —</option>
                 <?php foreach ($typeConfig as $key => $tc): ?>
                 <option value="<?= $key ?>"><?= $tc['label'] ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="form-group" id="produitGroup" style="display:none;">
+              <label>Produit concerné * <span style="font-weight:400;color:#7D8F76;font-size:0.78rem;">(déduit du stock vendable)</span></label>
+              <select name="produit_id" id="produitSelect">
+                <option value="">— Choisir —</option>
+                <?php foreach ($produitsStock as $p): ?>
+                <option value="<?= (int)$p['id'] ?>"><?= htmlspecialchars($p['nom']) ?> (<?= (int)$p['volume_ml'] ?> ml)</option>
                 <?php endforeach; ?>
               </select>
             </div>
@@ -496,5 +539,22 @@ $lotColors = ['#2F4B3C','#C6A43F','#3B82F6','#8B5CF6','#F97316','#EF4444','#10B9
   </div>
 
 </div>
+<script>
+(function () {
+  var deductibles = ['échantillon', 'défectueux']; // échantillon, défectueux
+  var typeSel = document.getElementById('typeSelect');
+  var grp     = document.getElementById('produitGroup');
+  var prodSel = document.getElementById('produitSelect');
+  if (!typeSel || !grp || !prodSel) return;
+  function toggle() {
+    var on = deductibles.indexOf(typeSel.value) !== -1;
+    grp.style.display = on ? '' : 'none';
+    prodSel.required = on;
+    if (!on) prodSel.value = '';
+  }
+  typeSel.addEventListener('change', toggle);
+  toggle();
+})();
+</script>
 </body>
 </html>

@@ -1,3 +1,10 @@
+# Rediriger le domaine nu vers www (canonique, en HTTPS) — 301
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_HOST} ^oravie\.tn$ [NC]
+    RewriteRule ^ https://www.oravie.tn%{REQUEST_URI} [L,R=301]
+</IfModule>
+
 # Interdire l'accès direct au fichier envprod
 <Files "envprod">
     Order allow,deny

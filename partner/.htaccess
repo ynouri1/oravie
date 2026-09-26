@@ -1,3 +1,6 @@
+# Servir index.php comme index du répertoire
+DirectoryIndex index.php
+
 # Interdire l'accès direct à auth.php
 <Files "auth.php">
     Order allow,deny

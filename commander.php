@@ -56,7 +56,7 @@ $praticien_id = filter_var($_POST['praticien_id'] ?? '', FILTER_VALIDATE_INT);
 if (!$praticien_id) $praticien_id = null;
 
 // Vérification des champs obligatoires
-if (!$prenom || !$nom || !$email || !$telephone || !$adresse || !$code_postal || !$ville) {
+if (!$civilite || !$prenom || !$nom || !$email || !$telephone || !$adresse || !$code_postal || !$ville) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Veuillez remplir tous les champs obligatoires.']);
     exit;
@@ -405,5 +405,6 @@ try {
 } catch (PDOException $e) {
     http_response_code(500);
     ob_clean();
-    echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement. Veuillez réessayer.']);
+    error_log('commander.php PDOException: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement: ' . $e->getMessage()]);
 }

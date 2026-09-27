@@ -86,6 +86,9 @@ foreach ($produitsInput as $ligne) {
 }
 
 try {
+    error_log('commander.php DEBUG: Starting order - prenom=' . $prenom . ' email=' . $email . ' civilite=' . $civilite);
+    error_log('commander.php DEBUG: produitsValides=' . json_encode($produitsValides));
+    
     $dsn = 'mysql:host=' . $env['DB_HOST'] . ';dbname=' . $env['DB_NAME'] . ';charset=utf8mb4';
     $pdo = new PDO($dsn, $env['DB_USER'], $env['DB_PASS'], [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -173,6 +176,7 @@ try {
     // Transaction : décrément atomique du stock + insertion de la commande.
     // Le décrément conditionnel (stock >= qte) empêche toute survente en cas de
     // commandes simultanées ; si un produit manque, tout est annulé (rollBack).
+    error_log('commander.php DEBUG: Starting transaction');
     $pdo->beginTransaction();
     try {
         $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1 AND stock >= :qte");
@@ -200,6 +204,7 @@ try {
         $newId = $pdo->lastInsertId();
 
         $pdo->commit();
+        error_log('commander.php DEBUG: Transaction committed - newId=' . $newId);
     } catch (PDOException $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e; // repris par le catch global -> réponse 500

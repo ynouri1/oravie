@@ -56,7 +56,7 @@ $praticien_id = filter_var($_POST['praticien_id'] ?? '', FILTER_VALIDATE_INT);
 if (!$praticien_id) $praticien_id = null;
 
 // Vérification des champs obligatoires
-if (!$prenom || !$nom || !$email || !$telephone || !$adresse || !$code_postal || !$ville) {
+if (!$civilite || !$prenom || !$nom || !$email || !$telephone || !$adresse || !$code_postal || !$ville) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Veuillez remplir tous les champs obligatoires.']);
     exit;
@@ -86,6 +86,9 @@ foreach ($produitsInput as $ligne) {
 }
 
 try {
+    error_log('commander.php DEBUG: Starting order - prenom=' . $prenom . ' email=' . $email . ' civilite=' . $civilite);
+    error_log('commander.php DEBUG: produitsValides=' . json_encode($produitsValides));
+    
     $dsn = 'mysql:host=' . $env['DB_HOST'] . ';dbname=' . $env['DB_NAME'] . ';charset=utf8mb4';
     $pdo = new PDO($dsn, $env['DB_USER'], $env['DB_PASS'], [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -173,13 +176,17 @@ try {
     // Transaction : décrément atomique du stock + insertion de la commande.
     // Le décrément conditionnel (stock >= qte) empêche toute survente en cas de
     // commandes simultanées ; si un produit manque, tout est annulé (rollBack).
+    error_log('commander.php DEBUG: Starting transaction');
     $pdo->beginTransaction();
     try {
-        $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1 AND stock >= :qtemin");
+        // Première partie : UPDATE du stock
+        $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1");
         foreach ($lignesCommande as $ligne) {
-            $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id'], ':qtemin' => $ligne['quantite']]);
+            error_log('commander.php DEBUG: Updating stock for product ' . $ligne['produit_id'] . ' qty ' . $ligne['quantite']);
+            $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id']]);
             if ($stmtStock->rowCount() !== 1) {
                 // Stock devenu insuffisant entre la vérification et l'achat
+                error_log('commander.php DEBUG: Stock update failed for ' . $ligne['produit_nom']);
                 $pdo->rollBack();
                 http_response_code(409);
                 ob_clean();
@@ -188,7 +195,8 @@ try {
             }
         }
 
-        // Insertion de la commande
+        // Deuxième partie : Insertion de la commande
+        error_log('commander.php DEBUG: Inserting order');
         $stmt = $pdo->prepare("
             INSERT INTO commandes (donnees, praticien_id, prix_total) VALUES (:donnees, :praticien_id, :prix)
         ");
@@ -198,9 +206,12 @@ try {
             ':prix' => $prix_total,
         ]);
         $newId = $pdo->lastInsertId();
+        error_log('commander.php DEBUG: Order inserted with ID ' . $newId);
 
         $pdo->commit();
+        error_log('commander.php DEBUG: Transaction committed - newId=' . $newId);
     } catch (PDOException $e) {
+        error_log('commander.php DEBUG: Transaction exception: ' . $e->getMessage());
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e; // repris par le catch global -> réponse 500
     }
@@ -405,5 +416,6 @@ try {
 } catch (PDOException $e) {
     http_response_code(500);
     ob_clean();
-    echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement. Veuillez réessayer.']);
+    error_log('commander.php PDOException: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement: ' . $e->getMessage()]);
 }

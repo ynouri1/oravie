@@ -117,10 +117,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Transaction : décrément atomique du stock + insertion (évite la survente)
         $pdo->beginTransaction();
         try {
-            $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1 AND stock >= :qte");
+            $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1 AND stock >= :qtemin");
             $stockOk = true;
             foreach ($lignesCommande as $ligne) {
-                $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id']]);
+                $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id'], ':qtemin' => $ligne['quantite']]);
                 if ($stmtStock->rowCount() !== 1) {
                     $errors[] = 'Stock insuffisant pour ' . $ligne['produit_nom'] . '.';
                     $stockOk = false;

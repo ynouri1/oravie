@@ -175,9 +175,9 @@ try {
     // commandes simultanées ; si un produit manque, tout est annulé (rollBack).
     $pdo->beginTransaction();
     try {
-        $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1 AND stock >= :qte");
+        $stmtStock = $pdo->prepare("UPDATE produits SET stock = stock - :qte WHERE id = :id AND actif = 1 AND stock >= :qtemin");
         foreach ($lignesCommande as $ligne) {
-            $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id']]);
+            $stmtStock->execute([':qte' => $ligne['quantite'], ':id' => $ligne['produit_id'], ':qtemin' => $ligne['quantite']]);
             if ($stmtStock->rowCount() !== 1) {
                 // Stock devenu insuffisant entre la vérification et l'achat
                 $pdo->rollBack();

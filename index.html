@@ -172,6 +172,7 @@
 
     /* Image produit */
     .product-image-container {
+      position: relative;
       background: linear-gradient(145deg, #EFF3EA, #E6ECE0);
       border-radius: 2rem;
       padding: 2rem;
@@ -180,6 +181,29 @@
       align-items: center;
       animation: scaleIn 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) 0.1s both;
     }
+
+    /* Badge de contrôle labo superposé sur l'image */
+    .certif-sticker {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #2F4B3C;
+      color: #fff;
+      padding: 9px 13px;
+      border-radius: 1rem;
+      font-size: 0.72rem;
+      line-height: 1.2;
+      text-decoration: none;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      z-index: 3;
+      transition: 0.2s;
+    }
+    .certif-sticker i { color: #C6A43F; font-size: 1.25rem; }
+    .certif-sticker strong { color: #fff; }
+    .certif-sticker:hover { background: #4A735C; transform: translateY(-1px); }
 
     .product-image {
       width: 100%;
@@ -724,6 +748,10 @@
     <div class="hero">
       <div class="hero-left">
         <div class="product-image-container">
+          <a href="https://www.daslabor.com/" target="_blank" rel="noopener" class="certif-sticker" title="Contrôlé par das Labor">
+            <i class="fas fa-flask"></i>
+            <span>Contrôlé par<br><strong>das Labor</strong></span>
+          </a>
           <img src="spray.jpg" alt="Spray désinfectant ORAVIE" class="product-image" id="mainImage">
         </div>
         
